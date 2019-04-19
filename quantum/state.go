@@ -63,8 +63,11 @@ func (s *State) String() string {
 }
 
 func (s *State) Copy() *State {
-	// TODO: do this in a less lazy way.
-	return s.Not(0).Not(0)
+	s1 := NewState(s.numBits)
+	for i, phase := range s.phases {
+		s1.phases[i] = phase
+	}
+	return s1
 }
 
 func (s *State) ApproxEqual(s1 *State, tol float64) bool {
