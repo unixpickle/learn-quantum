@@ -1,6 +1,10 @@
 package quantum
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+	"testing"
+)
 
 func ExampleState() {
 	// Create s1 = |+> |->
@@ -25,4 +29,21 @@ func ExampleState() {
 	// Output:
 	// 0.5|00> + -0.5|10> + -0.5|01> + 0.5|11>
 	// 0.5|00> + -0.5|10> + -0.5|01> + 0.5|11>
+}
+
+func TestStateSample(t *testing.T) {
+	s := NewState(2)
+	s = s.Hadamard(0)
+	s = s.CNot(0, 1)
+	counts := map[uint64]int{}
+	for i := 0; i < 100000; i++ {
+		counts[s.Sample()]++
+	}
+	if counts[1] != 0 || counts[2] != 0 {
+		fmt.Println("unexpected result")
+	}
+	// Stddev should be on the order of ~100.
+	if math.Abs(float64(counts[0]-counts[3])) > 1000 {
+		fmt.Println("incorrect sample counts, delta is", counts[0]-counts[3])
+	}
 }
