@@ -2,7 +2,7 @@ package quantum
 
 import "fmt"
 
-func ExampleCNotSource() {
+func ExampleState() {
 	// Create s1 = |+> |->
 	s1 := NewState(2)
 	s1 = s1.Not(1)
