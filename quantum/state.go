@@ -69,12 +69,12 @@ func (s *State) Not(bitIdx int) *State {
 	})
 }
 
-func (s *State) CNot(source, target int) *State {
-	if source < 0 || source >= s.numBits || target < 0 || target >= s.numBits {
+func (s *State) CNot(control, target int) *State {
+	if control < 0 || control >= s.numBits || target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
 	return s.Map(func(x uint64) uint64 {
-		b1 := (x & (1 << uint(source))) >> uint(source)
+		b1 := (x & (1 << uint(control))) >> uint(control)
 		return x ^ (b1 << uint(target))
 	})
 }
