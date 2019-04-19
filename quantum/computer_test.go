@@ -7,22 +7,22 @@ import (
 	"testing"
 )
 
-func ExampleState() {
+func ExampleSimulation() {
 	// Create s1 = |+> |->
-	s1 := NewState(2)
-	s1 = s1.Not(1)
-	s1 = s1.Hadamard(0)
-	s1 = s1.Hadamard(1)
+	s1 := NewSimulation(2)
+	Not(s1, 1)
+	Hadamard(s1, 0)
+	Hadamard(s1, 1)
 
 	// Create s2 = |-> |->
-	s2 := NewState(2)
-	s2 = s2.Not(0)
-	s2 = s2.Not(1)
-	s2 = s2.Hadamard(0)
-	s2 = s2.Hadamard(1)
+	s2 := NewSimulation(2)
+	Not(s2, 0)
+	Not(s2, 1)
+	Hadamard(s2, 0)
+	Hadamard(s2, 1)
 
 	// Apply CNot on s1.
-	s1 = s1.CNot(0, 1)
+	s1.CNot(0, 1)
 
 	fmt.Println(s1)
 	fmt.Println(s2)
@@ -32,13 +32,21 @@ func ExampleState() {
 	// 0.5|00> + -0.5|10> + -0.5|01> + 0.5|11>
 }
 
-func TestStateSample(t *testing.T) {
-	s := NewState(2)
-	s = s.Hadamard(0)
-	s = s.CNot(0, 1)
-	counts := map[uint64]int{}
+func TestSimulationSample(t *testing.T) {
+	s := NewSimulation(2)
+	Hadamard(s, 0)
+	s.CNot(0, 1)
+	counts := map[int]int{}
 	for i := 0; i < 100000; i++ {
-		counts[s.Sample()]++
+		b := s.Sample()
+		n := 0
+		if b[0] {
+			n |= 1
+		}
+		if b[1] {
+			n |= 2
+		}
+		counts[n]++
 	}
 	if counts[1] != 0 || counts[2] != 0 {
 		fmt.Println("unexpected result")
@@ -50,21 +58,21 @@ func TestStateSample(t *testing.T) {
 }
 
 func TestInverses(t *testing.T) {
-	s := RandomState(8)
+	s := RandomSimulation(8)
 	original := s.Copy()
 	makeNot := func(idx int) func() {
 		return func() {
-			s = s.Not(idx)
+			Not(s, idx)
 		}
 	}
 	makeHadamard := func(idx int) func() {
 		return func() {
-			s = s.Hadamard(idx)
+			Hadamard(s, idx)
 		}
 	}
 	makeCNot := func(control, target int) func() {
 		return func() {
-			s = s.CNot(control, target)
+			s.CNot(control, target)
 		}
 	}
 	ops := []func(){}
@@ -86,13 +94,13 @@ func TestInverses(t *testing.T) {
 	for _, op := range ops {
 		op()
 	}
-	if s.ApproxEqual(original, 0) {
+	if s.ApproxEqual(original, epsilon) {
 		t.Error("states should be nowhere close to equal")
 	}
 	for i := len(ops) - 1; i >= 0; i-- {
 		ops[i]()
 	}
-	if !s.ApproxEqual(original, 0) {
+	if !s.ApproxEqual(original, epsilon) {
 		t.Error("states not equal")
 	}
 }
