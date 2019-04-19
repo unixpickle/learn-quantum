@@ -1,9 +1,15 @@
 package quantum
 
 import (
+	"fmt"
 	"math"
+	"math/cmplx"
 	"math/rand"
+	"strconv"
+	"strings"
 )
+
+const epsilon = 1e-8
 
 type State struct {
 	phases  []complex128
@@ -17,6 +23,29 @@ func NewState(numBits int) *State {
 	}
 	s.phases[0] = 1
 	return s
+}
+
+func (s *State) String() string {
+	pieces := []string{}
+	for i, phase := range s.phases {
+		if cmplx.Abs(phase) < epsilon {
+			continue
+		}
+		var coeff string
+		if math.Abs(imag(phase)) < epsilon {
+			coeff = formatFloat(real(phase))
+		} else if math.Abs(real(phase)) < epsilon {
+			coeff = formatFloat(imag(phase)) + "i"
+		} else {
+			if imag(phase) > 0 {
+				coeff = fmt.Sprintf("(%s+%si)", formatFloat(real(phase)), formatFloat(imag(phase)))
+			} else {
+				coeff = fmt.Sprintf("(%s-%si)", formatFloat(real(phase)), formatFloat(-imag(phase)))
+			}
+		}
+		pieces = append(pieces, coeff+s.classicalString(i))
+	}
+	return strings.Join(pieces, " + ")
 }
 
 func (s *State) Sample() uint64 {
@@ -79,6 +108,14 @@ func (s *State) Map(f func(uint64) uint64) *State {
 	return s1
 }
 
+func (s *State) classicalString(i int) string {
+	res := ""
+	for j := 0; j < s.numBits; j++ {
+		res += strconv.Itoa((i & (1 << uint(j))) >> uint(j))
+	}
+	return "|" + res + ">"
+}
+
 func getBit(value uint64, idx int) bool {
 	return value<<uint(idx) != 0
 }
@@ -88,4 +125,15 @@ func setBit(value uint64, idx int, b bool) uint64 {
 		return value
 	}
 	return value ^ (1 << uint(idx))
+}
+
+func formatFloat(f float64) string {
+	res := fmt.Sprintf("%f", f)
+	for strings.Contains(res, ".") && res[len(res)-1] == '0' {
+		res = res[:len(res)-1]
+	}
+	if res[len(res)-1] == '.' {
+		return res[:len(res)-1]
+	}
+	return res
 }
