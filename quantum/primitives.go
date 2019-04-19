@@ -8,7 +8,17 @@ func Hadamard(c Computer, bitIdx int) {
 	c.Unitary(bitIdx, s, s, s, -s)
 }
 
-// Not performs a not gate.
-func Not(c Computer, bitIdx int) {
+// X performs a not gate.
+func X(c Computer, bitIdx int) {
 	c.Unitary(bitIdx, 0, 1, 1, 0)
+}
+
+// Y performs a Pauli Y-gate.
+func Y(c Computer, bitIdx int) {
+	c.Unitary(bitIdx, 0, complex(0, -1), complex(0, 1), 0)
+}
+
+// Z performs a Pauli Z-gate.
+func Z(c Computer, bitIdx int) {
+	c.Unitary(bitIdx, 1, 0, 0, -1)
 }

@@ -10,14 +10,14 @@ import (
 func ExampleSimulation() {
 	// Create s1 = |+> |->
 	s1 := NewSimulation(2)
-	Not(s1, 1)
+	X(s1, 1)
 	Hadamard(s1, 0)
 	Hadamard(s1, 1)
 
 	// Create s2 = |-> |->
 	s2 := NewSimulation(2)
-	Not(s2, 0)
-	Not(s2, 1)
+	X(s2, 0)
+	X(s2, 1)
 	Hadamard(s2, 0)
 	Hadamard(s2, 1)
 
@@ -60,9 +60,9 @@ func TestSimulationSample(t *testing.T) {
 func TestInverses(t *testing.T) {
 	s := RandomSimulation(8)
 	original := s.Copy()
-	makeNot := func(idx int) func() {
+	makeX := func(idx int) func() {
 		return func() {
-			Not(s, idx)
+			X(s, idx)
 		}
 	}
 	makeHadamard := func(idx int) func() {
@@ -79,7 +79,7 @@ func TestInverses(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		x := rand.Intn(3)
 		if x == 0 {
-			ops = append(ops, makeNot(rand.Intn(8)))
+			ops = append(ops, makeX(rand.Intn(8)))
 		} else if x == 1 {
 			ops = append(ops, makeHadamard(rand.Intn(8)))
 		} else {
@@ -101,6 +101,6 @@ func TestInverses(t *testing.T) {
 		ops[i]()
 	}
 	if !s.ApproxEqual(original, epsilon) {
-		t.Error("states not equal")
+		t.Error("states X equal")
 	}
 }
