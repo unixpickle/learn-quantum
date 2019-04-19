@@ -25,6 +25,20 @@ func NewState(numBits int) *State {
 	return s
 }
 
+func RandomState(numBits int) *State {
+	s := NewState(numBits)
+	mag := 0.0
+	for i := range s.phases {
+		s.phases[i] = complex(rand.NormFloat64(), rand.NormFloat64())
+		mag += math.Pow(cmplx.Abs(s.phases[i]), 2)
+	}
+	scale := complex(1/math.Sqrt(mag), 0)
+	for i := range s.phases {
+		s.phases[i] *= scale
+	}
+	return s
+}
+
 func (s *State) String() string {
 	pieces := []string{}
 	for i, phase := range s.phases {
@@ -46,6 +60,23 @@ func (s *State) String() string {
 		pieces = append(pieces, coeff+s.classicalString(i))
 	}
 	return strings.Join(pieces, " + ")
+}
+
+func (s *State) Copy() *State {
+	// TODO: do this in a less lazy way.
+	return s.Not(0).Not(0)
+}
+
+func (s *State) ApproxEqual(s1 *State, tol float64) bool {
+	if tol == 0 {
+		tol = epsilon
+	}
+	for i, phase := range s.phases {
+		if cmplx.Abs(phase-s1.phases[i]) > tol {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *State) Sample() uint64 {
