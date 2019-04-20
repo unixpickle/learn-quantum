@@ -2,6 +2,8 @@ package quantum
 
 import (
 	"fmt"
+	"math"
+	"math/cmplx"
 	"strconv"
 	"strings"
 )
@@ -34,6 +36,38 @@ func (c Circuit) Invert(comp Computer) {
 	for i := len(c) - 1; i >= 0; i-- {
 		c[i].Invert(comp)
 	}
+}
+
+type HGate struct {
+	Bit int
+}
+
+func (h *HGate) String() string {
+	return "H(" + strconv.Itoa(h.Bit) + ")"
+}
+
+func (h *HGate) Apply(c Computer) {
+	Hadamard(c, h.Bit)
+}
+
+func (h *HGate) Invert(c Computer) {
+	Hadamard(c, h.Bit)
+}
+
+type TGate struct {
+	Bit int
+}
+
+func (t *TGate) String() string {
+	return "T(" + strconv.Itoa(t.Bit) + ")"
+}
+
+func (t *TGate) Apply(c Computer) {
+	c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, math.Pi/4)))
+}
+
+func (t *TGate) Invert(c Computer) {
+	c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4)))
 }
 
 type XGate struct {

@@ -106,6 +106,16 @@ func (s *Simulation) CNot(control, target int) {
 	s.phases = res
 }
 
+func (s *Simulation) Phase(value []bool) complex128 {
+	var idx int
+	for i, x := range value {
+		if x {
+			idx |= 1 << uint(i)
+		}
+	}
+	return s.phases[idx]
+}
+
 func (s *Simulation) Copy() *Simulation {
 	res := &Simulation{
 		numBits: s.numBits,
