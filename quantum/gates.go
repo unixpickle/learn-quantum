@@ -55,19 +55,32 @@ func (h *HGate) Invert(c Computer) {
 }
 
 type TGate struct {
-	Bit int
+	Bit       int
+	Conjugate bool
 }
 
 func (t *TGate) String() string {
-	return "T(" + strconv.Itoa(t.Bit) + ")"
+	conjStr := ""
+	if t.Conjugate {
+		conjStr = "*"
+	}
+	return "T" + conjStr + "(" + strconv.Itoa(t.Bit) + ")"
 }
 
 func (t *TGate) Apply(c Computer) {
-	c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, math.Pi/4)))
+	if t.Conjugate {
+		(&TGate{Bit: t.Bit}).Invert(c)
+	} else {
+		c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, math.Pi/4)))
+	}
 }
 
 func (t *TGate) Invert(c Computer) {
-	c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4)))
+	if t.Conjugate {
+		(&TGate{Bit: t.Bit}).Apply(c)
+	} else {
+		c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4)))
+	}
 }
 
 type XGate struct {

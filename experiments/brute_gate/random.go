@@ -7,7 +7,7 @@ import (
 )
 
 func RandomGate(numBits int) quantum.Gate {
-	gid := rand.Intn(5)
+	gid := rand.Intn(7)
 	if gid == 0 {
 		return &quantum.XGate{Bit: rand.Intn(numBits)}
 	} else if gid == 1 {
@@ -23,6 +23,10 @@ func RandomGate(numBits int) quantum.Gate {
 		return &quantum.CNotGate{Control: source, Target: target}
 	} else if gid == 4 {
 		return &quantum.HGate{Bit: rand.Intn(numBits)}
+	} else if gid == 5 {
+		return &quantum.TGate{Bit: rand.Intn(numBits)}
+	} else if gid == 6 {
+		return &quantum.TGate{Bit: rand.Intn(numBits), Conjugate: true}
 	}
 	panic("unreachable")
 }
