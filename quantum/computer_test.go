@@ -65,6 +65,16 @@ func TestInverses(t *testing.T) {
 			X(s, idx)
 		}
 	}
+	makeY := func(idx int) func() {
+		return func() {
+			Y(s, idx)
+		}
+	}
+	makeZ := func(idx int) func() {
+		return func() {
+			Z(s, idx)
+		}
+	}
 	makeHadamard := func(idx int) func() {
 		return func() {
 			Hadamard(s, idx)
@@ -77,11 +87,15 @@ func TestInverses(t *testing.T) {
 	}
 	ops := []func(){}
 	for i := 0; i < 1000; i++ {
-		x := rand.Intn(3)
+		x := rand.Intn(5)
 		if x == 0 {
 			ops = append(ops, makeX(rand.Intn(8)))
 		} else if x == 1 {
 			ops = append(ops, makeHadamard(rand.Intn(8)))
+		} else if x == 2 {
+			ops = append(ops, makeY(rand.Intn(8)))
+		} else if x == 3 {
+			ops = append(ops, makeZ(rand.Intn(8)))
 		} else {
 			n1 := rand.Intn(8)
 			n2 := n1

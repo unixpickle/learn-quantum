@@ -112,9 +112,7 @@ func (y *YGate) Apply(c Computer) {
 }
 
 func (y *YGate) Invert(c Computer) {
-	for i := 0; i < 4; i++ {
-		Y(c, y.Bit)
-	}
+	Y(c, y.Bit)
 }
 
 type ZGate struct {
