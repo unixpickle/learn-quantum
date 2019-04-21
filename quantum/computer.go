@@ -23,16 +23,16 @@ type Computer interface {
 // computer.
 type Simulation struct {
 	numBits int
-	phases  []complex128
+	Phases  []complex128
 }
 
 // Create a new Simulation with all qubits set to 0.
 func NewSimulation(numBits int) *Simulation {
 	s := &Simulation{
 		numBits: numBits,
-		phases:  make([]complex128, 1<<uint(numBits)),
+		Phases:  make([]complex128, 1<<uint(numBits)),
 	}
-	s.phases[0] = 1
+	s.Phases[0] = 1
 	return s
 }
 
@@ -40,13 +40,13 @@ func NewSimulation(numBits int) *Simulation {
 func RandomSimulation(numBits int) *Simulation {
 	s := NewSimulation(numBits)
 	mag := 0.0
-	for i := range s.phases {
-		s.phases[i] = complex(rand.NormFloat64(), rand.NormFloat64())
-		mag += math.Pow(cmplx.Abs(s.phases[i]), 2)
+	for i := range s.Phases {
+		s.Phases[i] = complex(rand.NormFloat64(), rand.NormFloat64())
+		mag += math.Pow(cmplx.Abs(s.Phases[i]), 2)
 	}
 	scale := complex(1/math.Sqrt(mag), 0)
-	for i := range s.phases {
-		s.phases[i] *= scale
+	for i := range s.Phases {
+		s.Phases[i] *= scale
 	}
 	return s
 }
@@ -66,44 +66,44 @@ func (s *Simulation) Sample() []bool {
 
 func (s *Simulation) sampleIndex() int {
 	x := rand.Float64()
-	for i, phase := range s.phases {
+	for i, phase := range s.Phases {
 		v := real(phase)*real(phase) + imag(phase)*imag(phase)
 		x -= v
 		if x <= 0 {
 			return i
 		}
 	}
-	return len(s.phases) - 1
+	return len(s.Phases) - 1
 }
 
 func (s *Simulation) Unitary(target int, m11, m12, m21, m22 complex128) {
 	if target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
-	res := make([]complex128, len(s.phases))
-	for i := range s.phases {
+	res := make([]complex128, len(s.Phases))
+	for i := range s.Phases {
 		if i&(1<<uint(target)) != 0 {
 			continue
 		}
 		other := i | (1 << uint(target))
-		p0 := s.phases[i]
-		p1 := s.phases[other]
+		p0 := s.Phases[i]
+		p1 := s.Phases[other]
 		res[i] += m11*p0 + m12*p1
 		res[other] += m21*p0 + m22*p1
 	}
-	s.phases = res
+	s.Phases = res
 }
 
 func (s *Simulation) CNot(control, target int) {
 	if control < 0 || control >= s.numBits || target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
-	res := make([]complex128, len(s.phases))
-	for i, phase := range s.phases {
+	res := make([]complex128, len(s.Phases))
+	for i, phase := range s.Phases {
 		b1 := (i & (1 << uint(control))) >> uint(control)
 		res[i^(b1<<uint(target))] = phase
 	}
-	s.phases = res
+	s.Phases = res
 }
 
 func (s *Simulation) Phase(value []bool) complex128 {
@@ -113,23 +113,23 @@ func (s *Simulation) Phase(value []bool) complex128 {
 			idx |= 1 << uint(i)
 		}
 	}
-	return s.phases[idx]
+	return s.Phases[idx]
 }
 
 func (s *Simulation) Copy() *Simulation {
 	res := &Simulation{
 		numBits: s.numBits,
-		phases:  make([]complex128, len(s.phases)),
+		Phases:  make([]complex128, len(s.Phases)),
 	}
-	for i, phase := range s.phases {
-		res.phases[i] = phase
+	for i, phase := range s.Phases {
+		res.Phases[i] = phase
 	}
 	return res
 }
 
 func (s *Simulation) ApproxEqual(s1 *Simulation, tol float64) bool {
-	for i, phase := range s.phases {
-		if cmplx.Abs(phase-s1.phases[i]) > tol {
+	for i, phase := range s.Phases {
+		if cmplx.Abs(phase-s1.Phases[i]) > tol {
 			return false
 		}
 	}
@@ -138,7 +138,7 @@ func (s *Simulation) ApproxEqual(s1 *Simulation, tol float64) bool {
 
 func (s *Simulation) String() string {
 	pieces := []string{}
-	for i, phase := range s.phases {
+	for i, phase := range s.Phases {
 		if cmplx.Abs(phase) < epsilon {
 			continue
 		}
