@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"math/cmplx"
 	"math/rand"
 
@@ -24,7 +25,7 @@ OuterLoop:
 			}
 			c.Apply(sim)
 			output := gate(input)
-			if cmplx.Abs(sim.Phase(output)-1) > 1e-8 {
+			if math.Abs(cmplx.Abs(sim.Phase(output))-1) > 1e-8 {
 				continue OuterLoop
 			}
 		}
