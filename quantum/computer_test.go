@@ -115,6 +115,6 @@ func TestInverses(t *testing.T) {
 		ops[i]()
 	}
 	if !s.ApproxEqual(original, epsilon) {
-		t.Error("states X equal")
+		t.Error("states not equal")
 	}
 }
