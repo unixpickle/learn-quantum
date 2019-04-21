@@ -2,8 +2,6 @@ package quantum
 
 import (
 	"fmt"
-	"math"
-	"math/cmplx"
 	"strconv"
 	"strings"
 )
@@ -47,11 +45,11 @@ func (h *HGate) String() string {
 }
 
 func (h *HGate) Apply(c Computer) {
-	Hadamard(c, h.Bit)
+	H(c, h.Bit)
 }
 
 func (h *HGate) Invert(c Computer) {
-	Hadamard(c, h.Bit)
+	H(c, h.Bit)
 }
 
 type TGate struct {
@@ -69,17 +67,17 @@ func (t *TGate) String() string {
 
 func (t *TGate) Apply(c Computer) {
 	if t.Conjugate {
-		(&TGate{Bit: t.Bit}).Invert(c)
+		TInv(c, t.Bit)
 	} else {
-		c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, math.Pi/4)))
+		T(c, t.Bit)
 	}
 }
 
 func (t *TGate) Invert(c Computer) {
 	if t.Conjugate {
-		(&TGate{Bit: t.Bit}).Apply(c)
+		T(c, t.Bit)
 	} else {
-		c.Unitary(t.Bit, 1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4)))
+		TInv(c, t.Bit)
 	}
 }
 
@@ -146,4 +144,22 @@ func (c *CNotGate) Apply(comp Computer) {
 
 func (c *CNotGate) Invert(comp Computer) {
 	comp.CNot(c.Control, c.Target)
+}
+
+type CCNotGate struct {
+	Control1 int
+	Control2 int
+	Target   int
+}
+
+func (c *CCNotGate) String() string {
+	return fmt.Sprintf("CCNot(%d, %d, %d)", c.Control1, c.Control2, c.Target)
+}
+
+func (c *CCNotGate) Apply(comp Computer) {
+	CCNot(comp, c.Control1, c.Control2, c.Target)
+}
+
+func (c *CCNotGate) Invert(comp Computer) {
+	c.Apply(comp)
 }

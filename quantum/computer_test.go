@@ -11,15 +11,15 @@ func ExampleSimulation() {
 	// Create s1 = |+> |->
 	s1 := NewSimulation(2)
 	X(s1, 1)
-	Hadamard(s1, 0)
-	Hadamard(s1, 1)
+	H(s1, 0)
+	H(s1, 1)
 
 	// Create s2 = |-> |->
 	s2 := NewSimulation(2)
 	X(s2, 0)
 	X(s2, 1)
-	Hadamard(s2, 0)
-	Hadamard(s2, 1)
+	H(s2, 0)
+	H(s2, 1)
 
 	// Apply CNot on s1.
 	s1.CNot(0, 1)
@@ -34,7 +34,7 @@ func ExampleSimulation() {
 
 func TestSimulationSample(t *testing.T) {
 	s := NewSimulation(2)
-	Hadamard(s, 0)
+	H(s, 0)
 	s.CNot(0, 1)
 	counts := map[int]int{}
 	for i := 0; i < 100000; i++ {
@@ -75,9 +75,9 @@ func TestInverses(t *testing.T) {
 			Z(s, idx)
 		}
 	}
-	makeHadamard := func(idx int) func() {
+	makeH := func(idx int) func() {
 		return func() {
-			Hadamard(s, idx)
+			H(s, idx)
 		}
 	}
 	makeCNot := func(control, target int) func() {
@@ -91,7 +91,7 @@ func TestInverses(t *testing.T) {
 		if x == 0 {
 			ops = append(ops, makeX(rand.Intn(8)))
 		} else if x == 1 {
-			ops = append(ops, makeHadamard(rand.Intn(8)))
+			ops = append(ops, makeH(rand.Intn(8)))
 		} else if x == 2 {
 			ops = append(ops, makeY(rand.Intn(8)))
 		} else if x == 3 {
