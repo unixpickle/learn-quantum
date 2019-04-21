@@ -3,6 +3,7 @@ package quantum
 import (
 	"fmt"
 	"math"
+	"math/cmplx"
 	"math/rand"
 	"testing"
 )
@@ -116,5 +117,16 @@ func TestInverses(t *testing.T) {
 	}
 	if !s.ApproxEqual(original, epsilon) {
 		t.Error("states not equal")
+	}
+}
+
+func TestCCNot(t *testing.T) {
+	for i := 0; i < 8; i++ {
+		s := NewSimulationBits(3, uint(i))
+		output := i ^ (((i & 1) << 2) & ((i & 2) << 1))
+		CCNot(s, 0, 1, 2)
+		if cmplx.Abs(s.Phases[output]-1) > 1e-8 {
+			t.Error("incorrect result for", i)
+		}
 	}
 }

@@ -28,11 +28,16 @@ type Simulation struct {
 
 // Create a new Simulation with all qubits set to 0.
 func NewSimulation(numBits int) *Simulation {
+	return NewSimulationBits(numBits, 0)
+}
+
+// Create a new Simulation with a given bit-string.
+func NewSimulationBits(numBits int, value uint) *Simulation {
 	s := &Simulation{
 		numBits: numBits,
 		Phases:  make([]complex128, 1<<uint(numBits)),
 	}
-	s.Phases[0] = 1
+	s.Phases[int(value)] = 1
 	return s
 }
 

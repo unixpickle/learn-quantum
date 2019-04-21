@@ -18,7 +18,7 @@ func Search(numBits, maxGates int, gate func(b []bool) []bool, results chan<- qu
 		c := RandomCircuit(numBits, rand.Intn(TailSize)+1)
 		var bwdHash string
 		for _, out := range inToOut {
-			sim := simulationFromBits(numBits, out)
+			sim := quantum.NewSimulationBits(numBits, uint(out))
 			c.Invert(sim)
 			bwdHash += "  " + sim.String()
 		}
@@ -31,7 +31,7 @@ func Search(numBits, maxGates int, gate func(b []bool) []bool, results chan<- qu
 		c = RandomCircuit(numBits, rand.Intn(maxGates-TailSize)+1)
 		var fwdHash string
 		for i := 0; i < (1 << uint(numBits)); i++ {
-			sim := simulationFromBits(numBits, i)
+			sim := quantum.NewSimulationBits(numBits, uint(i))
 			c.Apply(sim)
 			fwdHash += "  " + sim.String()
 		}
@@ -76,16 +76,6 @@ func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
 		inToOut[i] = outInt
 	}
 	return inToOut
-}
-
-func simulationFromBits(numBits, bits int) *quantum.Simulation {
-	res := quantum.NewSimulation(numBits)
-	for i := 0; i < numBits; i++ {
-		if bits&(1<<uint(i)) != 0 {
-			quantum.X(res, i)
-		}
-	}
-	return res
 }
 
 func hashStr(s string) string {
