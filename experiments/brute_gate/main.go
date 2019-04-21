@@ -8,7 +8,7 @@ import (
 
 func main() {
 	results := make(chan quantum.Circuit, 1)
-	go Search(3, 15, Toffoli, results)
+	go Search(3, 20, Toffoli, results)
 	for result := range results {
 		fmt.Println(result)
 	}
