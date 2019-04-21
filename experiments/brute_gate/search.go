@@ -7,6 +7,8 @@ import (
 	"github.com/unixpickle/learn-quantum/quantum"
 )
 
+const TailSize = 6
+
 func Search(numBits, maxGates int, gate func(b []bool) []bool, results chan<- quantum.Circuit) {
 	inToOut := make([]int, 1<<uint(numBits))
 	for i := 0; i < 1<<uint(numBits); i++ {
@@ -24,36 +26,32 @@ func Search(numBits, maxGates int, gate func(b []bool) []bool, results chan<- qu
 		inToOut[i] = outInt
 	}
 
-	forwards := map[string]quantum.Circuit{}
 	backwards := map[string]quantum.Circuit{}
 	for {
-		c := RandomCircuit(numBits, rand.Intn(maxGates/2)+1)
-		var fwdHash string
-		for i := 0; i < (1 << uint(numBits)); i++ {
-			sim := simulationFromBits(numBits, i)
-			c.Apply(sim)
-			fwdHash += "  " + sim.String()
-		}
+		// Backwards search
+		c := RandomCircuit(numBits, rand.Intn(TailSize)+1)
 		var bwdHash string
 		for _, out := range inToOut {
 			sim := simulationFromBits(numBits, out)
 			c.Invert(sim)
 			bwdHash += "  " + sim.String()
 		}
-
-		fwdHash = hashStr(fwdHash)
 		bwdHash = hashStr(bwdHash)
-
-		if c1, ok := forwards[fwdHash]; !ok || len(c1) > len(c) {
-			forwards[fwdHash] = c
-		}
 		if c1, ok := backwards[bwdHash]; !ok || len(c1) > len(c) {
 			backwards[bwdHash] = c
 		}
+
+		// Forwards search
+		c = RandomCircuit(numBits, rand.Intn(maxGates-TailSize)+1)
+		var fwdHash string
+		for i := 0; i < (1 << uint(numBits)); i++ {
+			sim := simulationFromBits(numBits, i)
+			c.Apply(sim)
+			fwdHash += "  " + sim.String()
+		}
+		fwdHash = hashStr(fwdHash)
 		if c1, ok := backwards[fwdHash]; ok {
 			results <- append(append(quantum.Circuit{}, c...), c1...)
-		} else if c1, ok = forwards[bwdHash]; ok {
-			results <- append(append(quantum.Circuit{}, c1...), c...)
 		}
 	}
 }
