@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	circuitChunkSize = 4
-	maxBackward      = 7
+	maxBackward = 6
 )
 
 type SimHash [md5.Size]byte
@@ -45,49 +44,67 @@ func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
 }
 
 type searchContext struct {
-	NumBits     int
-	InToOut     []int
-	Gates       []quantum.Gate
-	RawCircuits [][]quantum.Circuit
+	NumBits int
+	InToOut []int
+	Gates   []quantum.Gate
+	Cache   [][]quantum.Circuit
 }
 
 func newSearchContext(numBits int, gate func([]bool) []bool) *searchContext {
+	var oneStep []quantum.Circuit
+	for _, g := range allGates(numBits) {
+		oneStep = append(oneStep, quantum.Circuit{g})
+	}
 	res := &searchContext{
 		NumBits: numBits,
 		InToOut: computeInToOut(numBits, gate),
 		Gates:   allGates(numBits),
+		Cache: [][]quantum.Circuit{
+			[]quantum.Circuit{quantum.Circuit{}},
+			oneStep,
+		},
 	}
-	for i := 0; i <= circuitChunkSize; i++ {
-		res.RawCircuits = append(res.RawCircuits, rawEnumerateCircuits(res.Gates, res.NumBits, i))
+	for i := 2; i <= maxBackward; i++ {
+		fmt.Println("Generating circuit cache at depth", i, "...")
+		next := map[SimHash]quantum.Circuit{}
+		_, ch := res.Enumerate(i)
+		for c := range ch {
+			next[HashCircuit(res.NumBits, c)] = c
+		}
+		var circuits []quantum.Circuit
+		for _, c := range next {
+			circuits = append(circuits, c)
+		}
+		res.Cache = append(res.Cache, circuits)
 	}
 	return res
 }
 
 func (s *searchContext) Enumerate(numGates int) (int, <-chan quantum.Circuit) {
-	if numGates < len(s.RawCircuits) {
-		raw := s.RawCircuits[numGates]
-		ch := make(chan quantum.Circuit, len(raw))
-		for _, c := range raw {
+	if numGates < len(s.Cache) {
+		cached := s.Cache[numGates]
+		ch := make(chan quantum.Circuit, len(cached))
+		for _, c := range cached {
 			ch <- c
 		}
 		close(ch)
-		return len(raw), ch
+		return len(cached), ch
 	}
 
-	raw := s.RawCircuits[circuitChunkSize]
-	subCount, subChan := s.Enumerate(numGates - circuitChunkSize)
+	cached := s.Cache[len(s.Cache)-1]
+	subCount, subChan := s.Enumerate(numGates - (len(s.Cache) - 1))
 
 	ch := make(chan quantum.Circuit, 1)
 	go func() {
 		defer close(ch)
 		for c1 := range subChan {
-			for _, c2 := range raw {
+			for _, c2 := range cached {
 				ch <- append(append(quantum.Circuit{}, c1...), c2...)
 			}
 		}
 	}()
 
-	return len(raw) * subCount, ch
+	return len(cached) * subCount, ch
 }
 
 func allGates(numBits int) []quantum.Gate {
@@ -106,25 +123,6 @@ func allGates(numBits int) []quantum.Gate {
 		}
 	}
 	return result
-}
-
-func rawEnumerateCircuits(gates []quantum.Gate, numBits, numGates int) []quantum.Circuit {
-	if numGates == 0 {
-		return []quantum.Circuit{quantum.Circuit{}}
-	}
-	x := map[SimHash]quantum.Circuit{}
-	subCircuits := rawEnumerateCircuits(gates, numBits, numGates-1)
-	for _, firstGate := range gates {
-		for _, tail := range subCircuits {
-			c := append(quantum.Circuit{firstGate}, tail...)
-			x[HashCircuit(numBits, c)] = c
-		}
-	}
-	var res []quantum.Circuit
-	for _, c := range x {
-		res = append(res, c)
-	}
-	return res
 }
 
 func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
