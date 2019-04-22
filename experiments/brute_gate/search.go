@@ -31,7 +31,7 @@ func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
 		}
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 1; i < 100; i++ {
 		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
