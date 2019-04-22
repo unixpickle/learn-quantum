@@ -2,61 +2,138 @@ package main
 
 import (
 	"crypto/md5"
-	"math/cmplx"
-	"math/rand"
+	"fmt"
 
 	"github.com/unixpickle/learn-quantum/quantum"
 )
 
-const TailSize = 7
+const (
+	circuitChunkSize = 4
+	maxBackward      = 7
+)
 
-func Search(numBits, maxGates int, gate func(b []bool) []bool, results chan<- quantum.Circuit) {
+func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
+	gates := AllGates(numBits)
 	inToOut := computeInToOut(numBits, gate)
+	goal := hashClassicalGate(numBits, inToOut)
 	backwards := map[string]quantum.Circuit{}
-	for {
-		// Backwards search
-		c := RandomCircuit(numBits, rand.Intn(TailSize)+1)
-		var bwdHash string
-		for _, out := range inToOut {
-			sim := quantum.NewSimulationBits(numBits, uint(out))
-			c.Invert(sim)
-			bwdHash += "  " + sim.String()
-		}
-		bwdHash = hashStr(bwdHash)
-		if c1, ok := backwards[bwdHash]; !ok || len(c1) > len(c) {
-			backwards[bwdHash] = c
-		}
 
-		// Forwards search
-		c = RandomCircuit(numBits, rand.Intn(maxGates-TailSize)+1)
-		var fwdHash string
-		for i := 0; i < (1 << uint(numBits)); i++ {
-			sim := quantum.NewSimulationBits(numBits, uint(i))
-			c.Apply(sim)
-			fwdHash += "  " + sim.String()
-		}
-		fwdHash = hashStr(fwdHash)
-		if c1, ok := backwards[fwdHash]; ok {
-			results <- append(append(quantum.Circuit{}, c...), c1...)
+	for i := 1; i <= maxBackward; i++ {
+		count, ch := EnumerateCircuits(gates, numBits, i)
+		fmt.Println("Doing backward search of depth", i, "with", count, "permutations...")
+		for c := range ch {
+			count -= 1
+			if hashCircuit(numBits, c) == goal {
+				return c
+			}
+			backwards[hashCircuitBackwards(numBits, c, inToOut)] = c
 		}
 	}
-}
 
-func SearchSqrt(numBits, maxGates int, gate func(b []bool) []bool, results chan<- quantum.Circuit) {
-	inToOut := computeInToOut(numBits, gate)
-OuterLoop:
-	for {
-		c := RandomCircuit(numBits, rand.Intn(maxGates)+1)
-		for _, out := range inToOut {
-			sim := quantum.NewSimulation(numBits)
-			c.Apply(sim)
-			c.Apply(sim)
-			if cmplx.Abs(sim.Phases[out]-1) > 1e-8 {
-				continue OuterLoop
+	for i := 0; i < 100; i++ {
+		count, ch := EnumerateCircuits(gates, numBits, i)
+		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
+		for c := range ch {
+			if c1, ok := backwards[hashCircuit(numBits, c)]; ok {
+				return append(c, c1...)
 			}
 		}
-		results <- c
 	}
+
+	return nil
+}
+
+func AllGates(numBits int) []quantum.Gate {
+	var result []quantum.Gate
+	for i := 0; i < numBits; i++ {
+		result = append(result, &quantum.HGate{Bit: i})
+		result = append(result, &quantum.TGate{Bit: i})
+		result = append(result, &quantum.TGate{Bit: i, Conjugate: true})
+		result = append(result, &quantum.XGate{Bit: i})
+		result = append(result, &quantum.YGate{Bit: i})
+		result = append(result, &quantum.ZGate{Bit: i})
+		for j := 0; j < numBits; j++ {
+			if j != i {
+				result = append(result, &quantum.CNotGate{Control: i, Target: j})
+			}
+		}
+	}
+	return result
+}
+
+func EnumerateCircuits(gates []quantum.Gate, numBits, numGates int) (int, <-chan quantum.Circuit) {
+	if numGates <= circuitChunkSize {
+		raw := rawEnumerateCircuits(gates, numBits, numGates)
+		ch := make(chan quantum.Circuit, len(raw))
+		for _, c := range raw {
+			ch <- c
+		}
+		close(ch)
+		return len(raw), ch
+	}
+
+	raw := rawEnumerateCircuits(gates, numBits, circuitChunkSize)
+	subCount, subChan := EnumerateCircuits(gates, numBits, numGates-circuitChunkSize)
+
+	ch := make(chan quantum.Circuit, 1)
+	go func() {
+		defer close(ch)
+		for c1 := range subChan {
+			for _, c2 := range raw {
+				ch <- append(append(quantum.Circuit{}, c1...), c2...)
+			}
+		}
+	}()
+
+	return len(raw) * subCount, ch
+}
+
+func rawEnumerateCircuits(gates []quantum.Gate, numBits, numGates int) []quantum.Circuit {
+	if numGates == 0 {
+		return []quantum.Circuit{quantum.Circuit{}}
+	}
+	x := map[string]quantum.Circuit{}
+	subCircuits := rawEnumerateCircuits(gates, numBits, numGates-1)
+	for _, firstGate := range gates {
+		for _, tail := range subCircuits {
+			c := append(quantum.Circuit{firstGate}, tail...)
+			x[hashCircuit(numBits, c)] = c
+		}
+	}
+	var res []quantum.Circuit
+	for _, c := range x {
+		res = append(res, c)
+	}
+	return res
+}
+
+func hashCircuit(numBits int, c quantum.Circuit) string {
+	var parts string
+	for i := 0; i < (1 << uint(numBits)); i++ {
+		sim := quantum.NewSimulationBits(numBits, uint(i))
+		c.Apply(sim)
+		parts += "  " + sim.String()
+	}
+	return hashStr(parts)
+}
+
+func hashCircuitBackwards(numBits int, c quantum.Circuit, inToOut []int) string {
+	var parts string
+	for _, i := range inToOut {
+		sim := quantum.NewSimulationBits(numBits, uint(i))
+		c.Invert(sim)
+		parts += "  " + sim.String()
+	}
+	return hashStr(parts)
+}
+
+func hashClassicalGate(numBits int, inToOut []int) string {
+	var parts string
+	for _, i := range inToOut {
+		sim := quantum.NewSimulationBits(numBits, uint(i))
+		parts += "  " + sim.String()
+	}
+	return hashStr(parts)
 }
 
 func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
