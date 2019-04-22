@@ -13,25 +13,24 @@ const (
 )
 
 func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
-	gates := AllGates(numBits)
-	inToOut := computeInToOut(numBits, gate)
-	goal := hashClassicalGate(numBits, inToOut)
+	ctx := newSearchContext(numBits, gate)
+	goal := hashClassicalGate(numBits, ctx.InToOut)
 	backwards := map[string]quantum.Circuit{}
 
 	for i := 1; i <= maxBackward; i++ {
-		count, ch := EnumerateCircuits(gates, numBits, i)
+		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing backward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
 			count -= 1
 			if hashCircuit(numBits, c) == goal {
 				return c
 			}
-			backwards[hashCircuitBackwards(numBits, c, inToOut)] = c
+			backwards[hashCircuitBackwards(numBits, c, ctx.InToOut)] = c
 		}
 	}
 
 	for i := 0; i < 100; i++ {
-		count, ch := EnumerateCircuits(gates, numBits, i)
+		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
 			if c1, ok := backwards[hashCircuit(numBits, c)]; ok {
@@ -43,7 +42,53 @@ func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
 	return nil
 }
 
-func AllGates(numBits int) []quantum.Gate {
+type searchContext struct {
+	NumBits     int
+	InToOut     []int
+	Gates       []quantum.Gate
+	RawCircuits [][]quantum.Circuit
+}
+
+func newSearchContext(numBits int, gate func([]bool) []bool) *searchContext {
+	res := &searchContext{
+		NumBits: numBits,
+		InToOut: computeInToOut(numBits, gate),
+		Gates:   allGates(numBits),
+	}
+	for i := 0; i <= circuitChunkSize; i++ {
+		res.RawCircuits = append(res.RawCircuits, rawEnumerateCircuits(res.Gates, res.NumBits, i))
+	}
+	return res
+}
+
+func (s *searchContext) Enumerate(numGates int) (int, <-chan quantum.Circuit) {
+	if numGates < len(s.RawCircuits) {
+		raw := s.RawCircuits[numGates]
+		ch := make(chan quantum.Circuit, len(raw))
+		for _, c := range raw {
+			ch <- c
+		}
+		close(ch)
+		return len(raw), ch
+	}
+
+	raw := s.RawCircuits[circuitChunkSize]
+	subCount, subChan := s.Enumerate(numGates - circuitChunkSize)
+
+	ch := make(chan quantum.Circuit, 1)
+	go func() {
+		defer close(ch)
+		for c1 := range subChan {
+			for _, c2 := range raw {
+				ch <- append(append(quantum.Circuit{}, c1...), c2...)
+			}
+		}
+	}()
+
+	return len(raw) * subCount, ch
+}
+
+func allGates(numBits int) []quantum.Gate {
 	var result []quantum.Gate
 	for i := 0; i < numBits; i++ {
 		result = append(result, &quantum.HGate{Bit: i})
@@ -59,33 +104,6 @@ func AllGates(numBits int) []quantum.Gate {
 		}
 	}
 	return result
-}
-
-func EnumerateCircuits(gates []quantum.Gate, numBits, numGates int) (int, <-chan quantum.Circuit) {
-	if numGates <= circuitChunkSize {
-		raw := rawEnumerateCircuits(gates, numBits, numGates)
-		ch := make(chan quantum.Circuit, len(raw))
-		for _, c := range raw {
-			ch <- c
-		}
-		close(ch)
-		return len(raw), ch
-	}
-
-	raw := rawEnumerateCircuits(gates, numBits, circuitChunkSize)
-	subCount, subChan := EnumerateCircuits(gates, numBits, numGates-circuitChunkSize)
-
-	ch := make(chan quantum.Circuit, 1)
-	go func() {
-		defer close(ch)
-		for c1 := range subChan {
-			for _, c2 := range raw {
-				ch <- append(append(quantum.Circuit{}, c1...), c2...)
-			}
-		}
-	}()
-
-	return len(raw) * subCount, ch
 }
 
 func rawEnumerateCircuits(gates []quantum.Gate, numBits, numGates int) []quantum.Circuit {
