@@ -130,3 +130,18 @@ func TestCCNot(t *testing.T) {
 		}
 	}
 }
+
+func TestSimulationInterference(t *testing.T) {
+	for i := 0; i < 4; i++ {
+		s := NewSimulationBits(2, uint(i))
+		H(s, 0)
+		H(s, 1)
+		s.CNot(0, 1)
+		H(s, 0)
+		H(s, 1)
+		output := i ^ ((i & 2) >> 1)
+		if cmplx.Abs(s.Phases[output]-1) > 1e-8 {
+			t.Error("unexpected output for", i)
+		}
+	}
+}
