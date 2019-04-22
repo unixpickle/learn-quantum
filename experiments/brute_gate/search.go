@@ -16,7 +16,7 @@ type SimHash [md5.Size]byte
 
 func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
 	ctx := newSearchContext(numBits, gate)
-	goal := hashClassicalGate(numBits, ctx.InToOut)
+	goal := HashClassicalGate(numBits, ctx.InToOut)
 	backwards := map[SimHash]quantum.Circuit{}
 
 	for i := 1; i <= maxBackward; i++ {
@@ -24,10 +24,10 @@ func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
 		fmt.Println("Doing backward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
 			count -= 1
-			if hashCircuit(numBits, c) == goal {
+			if HashCircuit(numBits, c) == goal {
 				return c
 			}
-			backwards[hashCircuitBackwards(numBits, c, ctx.InToOut)] = c
+			backwards[HashCircuitBackwards(numBits, c, ctx.InToOut)] = c
 		}
 	}
 
@@ -35,7 +35,7 @@ func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
 		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
-			if c1, ok := backwards[hashCircuit(numBits, c)]; ok {
+			if c1, ok := backwards[HashCircuit(numBits, c)]; ok {
 				return append(c, c1...)
 			}
 		}
@@ -117,7 +117,7 @@ func rawEnumerateCircuits(gates []quantum.Gate, numBits, numGates int) []quantum
 	for _, firstGate := range gates {
 		for _, tail := range subCircuits {
 			c := append(quantum.Circuit{firstGate}, tail...)
-			x[hashCircuit(numBits, c)] = c
+			x[HashCircuit(numBits, c)] = c
 		}
 	}
 	var res []quantum.Circuit
@@ -125,35 +125,6 @@ func rawEnumerateCircuits(gates []quantum.Gate, numBits, numGates int) []quantum
 		res = append(res, c)
 	}
 	return res
-}
-
-func hashCircuit(numBits int, c quantum.Circuit) SimHash {
-	data := make([]byte, 0, numBits*4*(1<<uint(numBits)))
-	for i := 0; i < (1 << uint(numBits)); i++ {
-		sim := quantum.NewSimulationBits(numBits, uint(i))
-		c.Apply(sim)
-		data = append(data, encodeQuantumState(sim)...)
-	}
-	return md5.Sum(data)
-}
-
-func hashCircuitBackwards(numBits int, c quantum.Circuit, inToOut []int) SimHash {
-	data := make([]byte, 0, numBits*4*len(inToOut))
-	for _, i := range inToOut {
-		sim := quantum.NewSimulationBits(numBits, uint(i))
-		c.Invert(sim)
-		data = append(data, encodeQuantumState(sim)...)
-	}
-	return md5.Sum(data)
-}
-
-func hashClassicalGate(numBits int, inToOut []int) SimHash {
-	data := make([]byte, 0, numBits*4*len(inToOut))
-	for _, i := range inToOut {
-		sim := quantum.NewSimulationBits(numBits, uint(i))
-		data = append(data, encodeQuantumState(sim)...)
-	}
-	return md5.Sum(data)
 }
 
 func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
@@ -173,14 +144,4 @@ func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
 		inToOut[i] = outInt
 	}
 	return inToOut
-}
-
-func encodeQuantumState(s *quantum.Simulation) []byte {
-	data := make([]byte, 0, len(s.Phases)*4)
-	for _, phase := range s.Phases {
-		r := uint16(int16(30000 * real(phase)))
-		i := uint16(int16(30000 * imag(phase)))
-		data = append(data, byte(r>>8), byte(r), byte(i>>8), byte(i))
-	}
-	return data
 }
