@@ -25,7 +25,7 @@ func AllGates(numBits int, includeCCNot bool) []quantum.Gate {
 		for j := 0; j < numBits; j++ {
 			if j != i {
 				result = append(result, &quantum.CNotGate{Control: i, Target: j})
-				if includeCCNot {
+				if includeCCNot && i < j {
 					for k := 0; k < numBits; k++ {
 						if k != i && k != j {
 							result = append(result, &quantum.CCNotGate{
