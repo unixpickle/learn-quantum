@@ -13,8 +13,37 @@ const (
 
 type SimHash [md5.Size]byte
 
-func Search(numBits int, gate func(b []bool) []bool) quantum.Circuit {
-	ctx := newSearchContext(numBits, gate)
+func AllGates(numBits int, includeCCNot bool) []quantum.Gate {
+	var result []quantum.Gate
+	for i := 0; i < numBits; i++ {
+		result = append(result, &quantum.HGate{Bit: i})
+		result = append(result, &quantum.TGate{Bit: i})
+		result = append(result, &quantum.TGate{Bit: i, Conjugate: true})
+		result = append(result, &quantum.XGate{Bit: i})
+		result = append(result, &quantum.YGate{Bit: i})
+		result = append(result, &quantum.ZGate{Bit: i})
+		for j := 0; j < numBits; j++ {
+			if j != i {
+				result = append(result, &quantum.CNotGate{Control: i, Target: j})
+				if includeCCNot {
+					for k := 0; k < numBits; k++ {
+						if k != i && k != j {
+							result = append(result, &quantum.CCNotGate{
+								Control1: i,
+								Control2: j,
+								Target:   k,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+	return result
+}
+
+func Search(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quantum.Circuit {
+	ctx := newSearchContext(numBits, gates, gate)
 	goal := HashClassicalGate(numBits, ctx.InToOut)
 	backwards := map[SimHash]quantum.Circuit{}
 
@@ -50,15 +79,15 @@ type searchContext struct {
 	Cache   [][]quantum.Circuit
 }
 
-func newSearchContext(numBits int, gate func([]bool) []bool) *searchContext {
+func newSearchContext(numBits int, gates []quantum.Gate, gate func([]bool) []bool) *searchContext {
 	var oneStep []quantum.Circuit
-	for _, g := range allGates(numBits) {
+	for _, g := range gates {
 		oneStep = append(oneStep, quantum.Circuit{g})
 	}
 	res := &searchContext{
 		NumBits: numBits,
 		InToOut: computeInToOut(numBits, gate),
-		Gates:   allGates(numBits),
+		Gates:   gates,
 		Cache: [][]quantum.Circuit{
 			[]quantum.Circuit{quantum.Circuit{}},
 			oneStep,
@@ -105,24 +134,6 @@ func (s *searchContext) Enumerate(numGates int) (int, <-chan quantum.Circuit) {
 	}()
 
 	return len(cached) * subCount, ch
-}
-
-func allGates(numBits int) []quantum.Gate {
-	var result []quantum.Gate
-	for i := 0; i < numBits; i++ {
-		result = append(result, &quantum.HGate{Bit: i})
-		result = append(result, &quantum.TGate{Bit: i})
-		result = append(result, &quantum.TGate{Bit: i, Conjugate: true})
-		result = append(result, &quantum.XGate{Bit: i})
-		result = append(result, &quantum.YGate{Bit: i})
-		result = append(result, &quantum.ZGate{Bit: i})
-		for j := 0; j < numBits; j++ {
-			if j != i {
-				result = append(result, &quantum.CNotGate{Control: i, Target: j})
-			}
-		}
-	}
-	return result
 }
 
 func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
