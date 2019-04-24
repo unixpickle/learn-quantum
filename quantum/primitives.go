@@ -36,6 +36,29 @@ func Z(c Computer, bitIdx int) {
 	c.Unitary(bitIdx, 1, 0, 0, -1)
 }
 
+// SqrtCNot performs the square root of the CNot gate.
+func SqrtCNot(c Computer, control, target int) {
+	// Found via search.
+	H(c, target)
+	TInv(c, target)
+	c.CNot(target, control)
+	T(c, control)
+	X(c, control)
+	TInv(c, control)
+	H(c, target)
+}
+
+// InvSqrtCNot performs the inverse of SqrtCNot.
+func InvSqrtCNot(c Computer, control, target int) {
+	H(c, target)
+	T(c, control)
+	X(c, control)
+	TInv(c, control)
+	c.CNot(target, control)
+	T(c, target)
+	H(c, target)
+}
+
 // CCNot performs a Toffoli gate.
 func CCNot(c Computer, control1, control2, target int) {
 	// https://quantum.country/qcvc
