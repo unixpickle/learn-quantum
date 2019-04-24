@@ -59,6 +59,38 @@ func InvSqrtCNot(c Computer, control, target int) {
 	H(c, target)
 }
 
+// Swap swaps two qubits.
+func Swap(c Computer, a, b int) {
+	c.CNot(a, b)
+	c.CNot(b, a)
+	c.CNot(a, b)
+}
+
+// SqrtSwap perfroms the square root of the Swap gate.
+func SqrtSwap(c Computer, a, b int) {
+	// Found via search.
+	TInv(c, a)
+	TInv(c, a)
+	c.CNot(a, b)
+	H(c, a)
+	TInv(c, b)
+	c.CNot(a, b)
+	T(c, b)
+	T(c, b)
+}
+
+// InvSqrtSwap perfroms the inverse of SqrtSwap.
+func InvSqrtSwap(c Computer, a, b int) {
+	TInv(c, b)
+	TInv(c, b)
+	c.CNot(a, b)
+	T(c, b)
+	H(c, a)
+	c.CNot(a, b)
+	T(c, a)
+	T(c, a)
+}
+
 // CCNot performs a Toffoli gate.
 func CCNot(c Computer, control1, control2, target int) {
 	// https://quantum.country/qcvc
