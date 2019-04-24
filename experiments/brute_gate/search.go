@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	maxBackward = 6
+	maxCircuitCache = 5000000
 )
 
 type SimHash [md5.Size]byte
@@ -47,7 +47,7 @@ func Search(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quant
 	goal := HashClassicalGate(numBits, ctx.InToOut)
 	backwards := map[SimHash]quantum.Circuit{}
 
-	for i := 1; i <= maxBackward; i++ {
+	for i := 1; i < len(ctx.Cache); i++ {
 		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing backward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
@@ -93,12 +93,22 @@ func newSearchContext(numBits int, gates []quantum.Gate, gate func([]bool) []boo
 			oneStep,
 		},
 	}
-	for i := 2; i <= maxBackward; i++ {
+	var numCircuits int
+
+CacheLoop:
+	for i := 2; i <= 100; i++ {
 		fmt.Println("Generating circuit cache at depth", i, "...")
 		next := map[SimHash]quantum.Circuit{}
 		_, ch := res.Enumerate(i)
 		for c := range ch {
-			next[HashCircuit(res.NumBits, c)] = c
+			hash := HashCircuit(res.NumBits, c)
+			if _, ok := next[hash]; !ok {
+				next[HashCircuit(res.NumBits, c)] = c
+				numCircuits++
+			}
+			if numCircuits > maxCircuitCache {
+				break CacheLoop
+			}
 		}
 		var circuits []quantum.Circuit
 		for _, c := range next {
