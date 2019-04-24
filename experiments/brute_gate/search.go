@@ -111,6 +111,7 @@ func newSearchContext(numBits int, gates []quantum.Gate, gate func([]bool) []boo
 			oneStep,
 		},
 	}
+
 	var numCircuits int
 
 CacheLoop:
