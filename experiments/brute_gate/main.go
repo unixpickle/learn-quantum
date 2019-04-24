@@ -1,12 +1,11 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func main() {
 	// fmt.Println(Search(3, AllGates(3, false), Toffoli))
-	fmt.Println(Search(3, AllGates(3, true), Or))
+	// fmt.Println(Search(3, AllGates(3, true), Or))
+	fmt.Println(SearchSqrt(2, AllGates(2, false), CNot))
 }
 
 func Toffoli(b []bool) []bool {

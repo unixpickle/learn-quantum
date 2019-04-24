@@ -72,6 +72,24 @@ func Search(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quant
 	return nil
 }
 
+func SearchSqrt(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quantum.Circuit {
+	ctx := newSearchContext(numBits, gates, gate)
+	goal := HashClassicalGate(numBits, ctx.InToOut)
+
+	for i := 1; i < 100; i++ {
+		count, ch := ctx.Enumerate(i)
+		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
+		for c := range ch {
+			c1 := append(append(quantum.Circuit{}, c...), c...)
+			if HashCircuit(numBits, c1) == goal {
+				return c
+			}
+		}
+	}
+
+	return nil
+}
+
 type searchContext struct {
 	NumBits int
 	InToOut []int
