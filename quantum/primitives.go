@@ -36,6 +36,22 @@ func Z(c Computer, bitIdx int) {
 	c.Unitary(bitIdx, 1, 0, 0, -1)
 }
 
+// SqrtNot performs the square root of the Not gate.
+func SqrtNot(c Computer, bitIdx int) {
+	H(c, bitIdx)
+	TInv(c, bitIdx)
+	TInv(c, bitIdx)
+	H(c, bitIdx)
+}
+
+// InvSqrtNot performs the inverse of SqrtNot.
+func InvSqrtNot(c Computer, bitIdx int) {
+	H(c, bitIdx)
+	T(c, bitIdx)
+	T(c, bitIdx)
+	H(c, bitIdx)
+}
+
 // SqrtCNot performs the square root of the CNot gate.
 func SqrtCNot(c Computer, control, target int) {
 	// Found via search.
