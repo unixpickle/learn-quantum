@@ -163,3 +163,19 @@ func (c *CCNotGate) Apply(comp Computer) {
 func (c *CCNotGate) Invert(comp Computer) {
 	c.Apply(comp)
 }
+
+type SqrtNotGate struct {
+	Bit int
+}
+
+func (s *SqrtNotGate) String() string {
+	return "SqrtNot(" + strconv.Itoa(s.Bit) + ")"
+}
+
+func (s *SqrtNotGate) Apply(c Computer) {
+	SqrtNot(c, s.Bit)
+}
+
+func (s *SqrtNotGate) Invert(c Computer) {
+	InvSqrtNot(c, s.Bit)
+}
