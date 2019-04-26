@@ -106,23 +106,3 @@ func InvSqrtSwap(c Computer, a, b int) {
 	T(c, a)
 	T(c, a)
 }
-
-// CCNot performs a Toffoli gate.
-func CCNot(c Computer, control1, control2, target int) {
-	// https://quantum.country/qcvc
-	H(c, target)
-	c.CNot(control2, target)
-	TInv(c, target)
-	c.CNot(control1, target)
-	T(c, target)
-	c.CNot(control2, target)
-	TInv(c, target)
-	c.CNot(control1, target)
-	T(c, control2)
-	T(c, target)
-	H(c, target)
-	c.CNot(control1, control2)
-	T(c, control1)
-	TInv(c, control2)
-	c.CNot(control1, control2)
-}
