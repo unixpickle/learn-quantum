@@ -45,7 +45,7 @@ func ToffoliN(c Computer, target int, control ...int) {
 				CCNot(c, control[i], targets[i-2], targets[i-1])
 			}
 			CCNot(c, control[0], control[1], targets[0])
-			for i := 2; i < len(control)-1; i++ {
+			for i := 2; i < len(control); i++ {
 				CCNot(c, control[i], targets[i-2], targets[i-1])
 			}
 
@@ -54,7 +54,7 @@ func ToffoliN(c Computer, target int, control ...int) {
 				CCNot(c, control[i], targets[i-2], targets[i-1])
 			}
 			CCNot(c, control[0], control[1], targets[0])
-			for i := 2; i < len(control)-2; i++ {
+			for i := 2; i < len(control)-1; i++ {
 				CCNot(c, control[i], targets[i-2], targets[i-1])
 			}
 		} else {
