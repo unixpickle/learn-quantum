@@ -17,10 +17,11 @@ func HashCircuit(numBits int, c quantum.Circuit) SimHash {
 }
 
 func HashCircuitBackwards(numBits int, c quantum.Circuit, inToOut []int) SimHash {
+	inv := c.Inverse()
 	data := make([]byte, 0, numBits*4*len(inToOut))
 	for _, i := range inToOut {
 		sim := quantum.NewSimulationBits(numBits, uint(i))
-		c.Invert(sim)
+		inv.Apply(sim)
 		data = append(data, encodeQuantumState(sim)...)
 	}
 	return md5.Sum(data)

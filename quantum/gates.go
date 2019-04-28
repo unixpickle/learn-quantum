@@ -11,7 +11,7 @@ import (
 type Gate interface {
 	fmt.Stringer
 	Apply(c Computer)
-	Invert(c Computer)
+	Inverse() Gate
 }
 
 type Circuit []Gate
@@ -30,10 +30,12 @@ func (c Circuit) Apply(comp Computer) {
 	}
 }
 
-func (c Circuit) Invert(comp Computer) {
+func (c Circuit) Inverse() Gate {
+	var res Circuit
 	for i := len(c) - 1; i >= 0; i-- {
-		c[i].Invert(comp)
+		res = append(res, c[i].Inverse())
 	}
+	return res
 }
 
 type HGate struct {
@@ -48,8 +50,8 @@ func (h *HGate) Apply(c Computer) {
 	H(c, h.Bit)
 }
 
-func (h *HGate) Invert(c Computer) {
-	H(c, h.Bit)
+func (h *HGate) Inverse() Gate {
+	return h
 }
 
 type TGate struct {
@@ -73,11 +75,10 @@ func (t *TGate) Apply(c Computer) {
 	}
 }
 
-func (t *TGate) Invert(c Computer) {
-	if t.Conjugate {
-		T(c, t.Bit)
-	} else {
-		TInv(c, t.Bit)
+func (t *TGate) Inverse() Gate {
+	return &TGate{
+		Bit:       t.Bit,
+		Conjugate: !t.Conjugate,
 	}
 }
 
@@ -93,8 +94,8 @@ func (x *XGate) Apply(c Computer) {
 	X(c, x.Bit)
 }
 
-func (x *XGate) Invert(c Computer) {
-	X(c, x.Bit)
+func (x *XGate) Inverse() Gate {
+	return x
 }
 
 type YGate struct {
@@ -109,8 +110,8 @@ func (y *YGate) Apply(c Computer) {
 	Y(c, y.Bit)
 }
 
-func (y *YGate) Invert(c Computer) {
-	Y(c, y.Bit)
+func (y *YGate) Inverse() Gate {
+	return y
 }
 
 type ZGate struct {
@@ -125,8 +126,8 @@ func (z *ZGate) Apply(c Computer) {
 	Z(c, z.Bit)
 }
 
-func (z *ZGate) Invert(c Computer) {
-	Z(c, z.Bit)
+func (z *ZGate) Inverse() Gate {
+	return z
 }
 
 type CNotGate struct {
@@ -142,8 +143,8 @@ func (c *CNotGate) Apply(comp Computer) {
 	comp.CNot(c.Control, c.Target)
 }
 
-func (c *CNotGate) Invert(comp Computer) {
-	comp.CNot(c.Control, c.Target)
+func (c *CNotGate) Inverse() Gate {
+	return c
 }
 
 type CCNotGate struct {
@@ -160,22 +161,34 @@ func (c *CCNotGate) Apply(comp Computer) {
 	CCNot(comp, c.Control1, c.Control2, c.Target)
 }
 
-func (c *CCNotGate) Invert(comp Computer) {
-	c.Apply(comp)
+func (c *CCNotGate) Inverse() Gate {
+	return c
 }
 
 type SqrtNotGate struct {
-	Bit int
+	Bit    int
+	Invert bool
 }
 
 func (s *SqrtNotGate) String() string {
-	return "SqrtNot(" + strconv.Itoa(s.Bit) + ")"
+	if s.Invert {
+		return "SqrtNot*(" + strconv.Itoa(s.Bit) + ")"
+	} else {
+		return "SqrtNot(" + strconv.Itoa(s.Bit) + ")"
+	}
 }
 
 func (s *SqrtNotGate) Apply(c Computer) {
-	SqrtNot(c, s.Bit)
+	if s.Invert {
+		InvSqrtNot(c, s.Bit)
+	} else {
+		SqrtNot(c, s.Bit)
+	}
 }
 
-func (s *SqrtNotGate) Invert(c Computer) {
-	InvSqrtNot(c, s.Bit)
+func (s *SqrtNotGate) Inverse() Gate {
+	return &SqrtNotGate{
+		Bit:    s.Bit,
+		Invert: !s.Invert,
+	}
 }
