@@ -71,7 +71,6 @@ func (s *Simulation) Measure(bitIdx int) bool {
 			zeroProb += prob
 		}
 	}
-	fmt.Println(zeroProb, oneProb)
 	isOne := rand.Float64() > zeroProb
 	var scale float64
 	if isOne {
