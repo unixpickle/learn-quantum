@@ -14,7 +14,7 @@ const epsilon = 1e-8
 // A Computer is a generic quantum computer.
 type Computer interface {
 	NumBits() int
-	Sample() []bool
+	Measure(bitIdx int) bool
 	Unitary(target int, m11, m12, m21, m22 complex128)
 	CNot(control, target int)
 }
@@ -60,25 +60,33 @@ func (s *Simulation) NumBits() int {
 	return s.numBits
 }
 
-func (s *Simulation) Sample() []bool {
-	x := s.sampleIndex()
-	res := make([]bool, s.numBits)
-	for i := range res {
-		res[i] = x&(1<<uint(i)) != 0
-	}
-	return res
-}
-
-func (s *Simulation) sampleIndex() int {
-	x := rand.Float64()
-	for i, phase := range s.Phases {
-		v := real(phase)*real(phase) + imag(phase)*imag(phase)
-		x -= v
-		if x <= 0 {
-			return i
+func (s *Simulation) Measure(bitIdx int) bool {
+	var zeroProb float64
+	var oneProb float64
+	for i, ph := range s.Phases {
+		prob := math.Pow(cmplx.Abs(ph), 2)
+		if i&(1<<uint(bitIdx)) != 0 {
+			oneProb += prob
+		} else {
+			zeroProb += prob
 		}
 	}
-	return len(s.Phases) - 1
+	fmt.Println(zeroProb, oneProb)
+	isOne := rand.Float64() > zeroProb
+	var scale float64
+	if isOne {
+		scale = 1 / math.Sqrt(oneProb)
+	} else {
+		scale = 1 / math.Sqrt(zeroProb)
+	}
+	for i := range s.Phases {
+		if (i&(1<<uint(bitIdx)) != 0) != isOne {
+			s.Phases[i] = 0
+		} else {
+			s.Phases[i] *= complex(scale, 0)
+		}
+	}
+	return isOne
 }
 
 func (s *Simulation) Unitary(target int, m11, m12, m21, m22 complex128) {
@@ -162,6 +170,14 @@ func (s *Simulation) String() string {
 		pieces = append(pieces, coeff+s.classicalString(i))
 	}
 	return strings.Join(pieces, " + ")
+}
+
+func (s *Simulation) Sample() []bool {
+	var res []bool
+	for i := 0; i < s.numBits; i++ {
+		res = append(res, s.Measure(i))
+	}
+	return res
 }
 
 func (s *Simulation) classicalString(i int) string {

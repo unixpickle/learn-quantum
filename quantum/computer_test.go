@@ -39,7 +39,7 @@ func TestSimulationSample(t *testing.T) {
 	s.CNot(0, 1)
 	counts := map[int]int{}
 	for i := 0; i < 100000; i++ {
-		b := s.Sample()
+		b := s.Copy().Sample()
 		n := 0
 		if b[0] {
 			n |= 1
@@ -50,11 +50,11 @@ func TestSimulationSample(t *testing.T) {
 		counts[n]++
 	}
 	if counts[1] != 0 || counts[2] != 0 {
-		fmt.Println("unexpected result")
+		t.Errorf("unexpected result")
 	}
 	// Stddev should be on the order of ~100.
 	if math.Abs(float64(counts[0]-counts[3])) > 1000 {
-		fmt.Println("incorrect sample counts, delta is", counts[0]-counts[3])
+		t.Errorf("incorrect sample counts, delta is %d", counts[0]-counts[3])
 	}
 }
 
