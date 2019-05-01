@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestSqrtCNot(t *testing.T) {
-	testControl(t, SqrtNot, InvSqrtNot, SqrtCNot, InvSqrtCNot)
+func TestCSqrtNot(t *testing.T) {
+	testControl(t, SqrtNot, InvSqrtNot, CSqrtNot, InvCSqrtNot)
 }
 
 func TestCH(t *testing.T) {

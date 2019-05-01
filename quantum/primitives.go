@@ -52,8 +52,8 @@ func InvSqrtNot(c Computer, bitIdx int) {
 	H(c, bitIdx)
 }
 
-// SqrtCNot performs the square root of the CNot gate.
-func SqrtCNot(c Computer, control, target int) {
+// CSqrtNot performs a controlled SqrtNot gate.
+func CSqrtNot(c Computer, control, target int) {
 	// Found via search.
 	H(c, target)
 	TInv(c, control)
@@ -64,8 +64,8 @@ func SqrtCNot(c Computer, control, target int) {
 	H(c, target)
 }
 
-// InvSqrtCNot performs the inverse of SqrtCNot.
-func InvSqrtCNot(c Computer, control, target int) {
+// InvCSqrtNot is the inverse of CSqrtNot.
+func InvCSqrtNot(c Computer, control, target int) {
 	H(c, target)
 	T(c, target)
 	c.CNot(control, target)
