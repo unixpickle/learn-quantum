@@ -55,24 +55,24 @@ func InvSqrtNot(c Computer, bitIdx int) {
 // SqrtCNot performs the square root of the CNot gate.
 func SqrtCNot(c Computer, control, target int) {
 	// Found via search.
-	TInv(c, 0)
-	H(c, 1)
-	c.CNot(0, 1)
-	T(c, 1)
-	c.CNot(0, 1)
-	TInv(c, 1)
-	H(c, 1)
+	H(c, target)
+	TInv(c, control)
+	c.CNot(control, target)
+	T(c, target)
+	c.CNot(control, target)
+	TInv(c, target)
+	H(c, target)
 }
 
 // InvSqrtCNot performs the inverse of SqrtCNot.
 func InvSqrtCNot(c Computer, control, target int) {
-	H(c, 1)
-	T(c, 1)
-	c.CNot(0, 1)
-	TInv(c, 1)
-	c.CNot(0, 1)
-	H(c, 1)
-	T(c, 0)
+	H(c, target)
+	T(c, target)
+	c.CNot(control, target)
+	TInv(c, target)
+	c.CNot(control, target)
+	T(c, control)
+	H(c, target)
 }
 
 // Swap swaps two qubits.
