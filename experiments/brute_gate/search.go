@@ -6,9 +6,7 @@ import (
 	"github.com/unixpickle/learn-quantum/quantum"
 )
 
-const (
-	maxCircuitCache = 5000000
-)
+const maxCircuitCache = 5000000
 
 func AllGates(numBits int, includeCCNot bool) []quantum.Gate {
 	var result []quantum.Gate
