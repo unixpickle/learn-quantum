@@ -7,13 +7,13 @@ import (
 )
 
 func main() {
-	// fmt.Println(Search(3, AllGates(3, false), Toffoli))
+	fmt.Println(Search(3, AllGates(3, false), quantum.NewClassicalGate(Toffoli, "")))
 	// fmt.Println(Search(3, AllGates(3, true), Or))
 	// fmt.Println(SearchSqrt(2, AllGates(2, false), CNot))
 	// fmt.Println(SearchSqrt(2, AllGates(2, false), Swap))
 	// fmt.Println(Search(3, AllGates(3, false), CSwap))
 	// fmt.Println(SearchSqrt(1, AllGates(1, false), Not))
-	fmt.Println(SearchCtrl(2, AllGates(2, false), &quantum.SqrtNotGate{Bit: 1}))
+	// fmt.Println(SearchCtrl(2, AllGates(2, false), &quantum.SqrtNotGate{Bit: 1}))
 }
 
 func Not(b []bool) []bool {
