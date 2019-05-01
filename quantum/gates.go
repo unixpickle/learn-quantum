@@ -54,6 +54,23 @@ func (h *HGate) Inverse() Gate {
 	return h
 }
 
+type CHGate struct {
+	Control int
+	Target  int
+}
+
+func (c *CHGate) String() string {
+	return fmt.Sprintf("CH(%d, %d)", c.Control, c.Target)
+}
+
+func (c *CHGate) Apply(comp Computer) {
+	CH(comp, c.Control, c.Target)
+}
+
+func (c *CHGate) Inverse() Gate {
+	return c
+}
+
 type TGate struct {
 	Bit       int
 	Conjugate bool
@@ -191,6 +208,25 @@ func (s *SqrtNotGate) Inverse() Gate {
 		Bit:    s.Bit,
 		Invert: !s.Invert,
 	}
+}
+
+// FnGate is a gate that calls contained functions.
+type FnGate struct {
+	Forward  func(c Computer)
+	Backward func(c Computer)
+	Str      string
+}
+
+func (f *FnGate) String() string {
+	return f.Str
+}
+
+func (f *FnGate) Apply(c Computer) {
+	f.Forward(c)
+}
+
+func (f *FnGate) Inverse() Gate {
+	return &FnGate{Forward: f.Backward, Backward: f.Forward, Str: "Inv(" + f.Str + ")"}
 }
 
 // A ClassicalGate applies a bitwise function to classical

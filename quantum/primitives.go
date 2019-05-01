@@ -106,3 +106,17 @@ func InvSqrtSwap(c Computer, a, b int) {
 	T(c, a)
 	T(c, a)
 }
+
+// CH applies a controlled Hadamard gate.
+func CH(c Computer, control, target int) {
+	// Found via search.
+	T(c, target)
+	T(c, target)
+	H(c, target)
+	T(c, target)
+	c.CNot(control, target)
+	TInv(c, target)
+	H(c, target)
+	TInv(c, target)
+	TInv(c, target)
+}

@@ -179,6 +179,27 @@ func (s *Simulation) Sample() []bool {
 	return res
 }
 
+// ControlGate runs the gate g on states where control is
+// not set.
+// The gate g must not modify the control bit.
+func (s *Simulation) ControlGate(control int, g Gate) {
+	s1 := s.Copy()
+	for i := range s.Phases {
+		if i&1 == 0 {
+			s1.Phases[i] = 0
+		} else {
+			s.Phases[i] = 0
+		}
+	}
+	g.Apply(s1)
+	for i, phase := range s1.Phases {
+		if phase != 0 && s.Phases[i] != 0 {
+			panic("gate must not modify control bit")
+		}
+		s.Phases[i] += phase
+	}
+}
+
 func (s *Simulation) classicalString(i int) string {
 	res := ""
 	for j := 0; j < s.numBits; j++ {
