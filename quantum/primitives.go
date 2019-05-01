@@ -16,9 +16,19 @@ func T(c Computer, bitIdx int) {
 	c.Unitary(bitIdx, 1, 0, 0, cmplx.Exp(complex(0, math.Pi/4)))
 }
 
-// TInv performs an inverse rotation by pi/4.
-func TInv(c Computer, bitIdx int) {
+// InvT performs an inverse rotation by pi/4.
+func InvT(c Computer, bitIdx int) {
 	c.Unitary(bitIdx, 1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4)))
+}
+
+// SqrtT performs the positive square root of the T gate.
+func SqrtT(c Computer, bitIdx int) {
+	c.Unitary(bitIdx, 1, 0, 0, cmplx.Exp(complex(0, math.Pi/8)))
+}
+
+// InvSqrtT performs the negative square root of the T gate.
+func InvSqrtT(c Computer, bitIdx int) {
+	c.Unitary(bitIdx, 1, 0, 0, cmplx.Exp(complex(0, -math.Pi/8)))
 }
 
 // X performs a not gate.
@@ -39,8 +49,8 @@ func Z(c Computer, bitIdx int) {
 // SqrtNot performs the square root of the Not gate.
 func SqrtNot(c Computer, bitIdx int) {
 	H(c, bitIdx)
-	TInv(c, bitIdx)
-	TInv(c, bitIdx)
+	InvT(c, bitIdx)
+	InvT(c, bitIdx)
 	H(c, bitIdx)
 }
 
@@ -56,11 +66,11 @@ func InvSqrtNot(c Computer, bitIdx int) {
 func CSqrtNot(c Computer, control, target int) {
 	// Found via search.
 	H(c, target)
-	TInv(c, control)
+	InvT(c, control)
 	c.CNot(control, target)
 	T(c, target)
 	c.CNot(control, target)
-	TInv(c, target)
+	InvT(c, target)
 	H(c, target)
 }
 
@@ -69,7 +79,7 @@ func InvCSqrtNot(c Computer, control, target int) {
 	H(c, target)
 	T(c, target)
 	c.CNot(control, target)
-	TInv(c, target)
+	InvT(c, target)
 	c.CNot(control, target)
 	T(c, control)
 	H(c, target)
@@ -85,11 +95,11 @@ func Swap(c Computer, a, b int) {
 // SqrtSwap perfroms the square root of the Swap gate.
 func SqrtSwap(c Computer, a, b int) {
 	// Found via search.
-	TInv(c, a)
-	TInv(c, a)
+	InvT(c, a)
+	InvT(c, a)
 	c.CNot(a, b)
 	H(c, a)
-	TInv(c, b)
+	InvT(c, b)
 	c.CNot(a, b)
 	T(c, b)
 	T(c, b)
@@ -97,8 +107,8 @@ func SqrtSwap(c Computer, a, b int) {
 
 // InvSqrtSwap perfroms the inverse of SqrtSwap.
 func InvSqrtSwap(c Computer, a, b int) {
-	TInv(c, b)
-	TInv(c, b)
+	InvT(c, b)
+	InvT(c, b)
 	c.CNot(a, b)
 	T(c, b)
 	H(c, a)
@@ -115,8 +125,8 @@ func CH(c Computer, control, target int) {
 	H(c, target)
 	T(c, target)
 	c.CNot(control, target)
-	TInv(c, target)
+	InvT(c, target)
 	H(c, target)
-	TInv(c, target)
-	TInv(c, target)
+	InvT(c, target)
+	InvT(c, target)
 }

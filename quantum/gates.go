@@ -86,7 +86,7 @@ func (t *TGate) String() string {
 
 func (t *TGate) Apply(c Computer) {
 	if t.Conjugate {
-		TInv(c, t.Bit)
+		InvT(c, t.Bit)
 	} else {
 		T(c, t.Bit)
 	}
