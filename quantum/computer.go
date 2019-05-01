@@ -185,7 +185,7 @@ func (s *Simulation) Sample() []bool {
 func (s *Simulation) ControlGate(control int, g Gate) {
 	s1 := s.Copy()
 	for i := range s.Phases {
-		if i&1 == 0 {
+		if i&(1<<uint(control)) == 0 {
 			s1.Phases[i] = 0
 		} else {
 			s.Phases[i] = 0
