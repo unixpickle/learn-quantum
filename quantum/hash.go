@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-const valueScale = 30000
+const valueScale = (1 << 30)
 
 type CircuitHash [md5.Size]byte
 
@@ -38,8 +38,8 @@ func NewCircuitHasher(numBits int) CircuitHasher {
 		r := real(phase)
 		im := imag(phase)
 		start.Phases[i] = complex(
-			float64(int16(r*valueScale))/valueScale,
-			float64(int16(im*valueScale))/valueScale,
+			float64(int32(r*valueScale))/valueScale,
+			float64(int32(im*valueScale))/valueScale,
 		)
 	}
 
@@ -53,11 +53,13 @@ func (c *circuitHasher) NumBits() int {
 func (c *circuitHasher) Hash(g Gate) CircuitHash {
 	s := c.startState.Copy()
 	g.Apply(s)
-	data := make([]byte, 0, len(s.Phases)*4)
+	data := make([]byte, 0, len(s.Phases)*8)
 	for _, phase := range s.Phases {
-		r := uint16(int16(math.Round(valueScale * real(phase))))
-		im := uint16(int16(math.Round(valueScale * imag(phase))))
-		data = append(data, byte(r>>8), byte(r), byte(im>>8), byte(im))
+		r := uint32(int32(math.Round(valueScale * real(phase))))
+		im := uint32(int32(math.Round(valueScale * imag(phase))))
+		data = append(data,
+			byte(r>>24), byte(r>>16), byte(r>>8), byte(r),
+			byte(im>>24), byte(im>>16), byte(im>>8), byte(im))
 	}
 	return md5.Sum(data)
 }
