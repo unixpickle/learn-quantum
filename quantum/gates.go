@@ -210,6 +210,31 @@ func (s *SqrtNotGate) Inverse() Gate {
 	}
 }
 
+type SqrtTGate struct {
+	Bit       int
+	Conjugate bool
+}
+
+func (s *SqrtTGate) String() string {
+	conjStr := ""
+	if s.Conjugate {
+		conjStr = "*"
+	}
+	return "SqrtT" + conjStr + "(" + strconv.Itoa(s.Bit) + ")"
+}
+
+func (s *SqrtTGate) Apply(c Computer) {
+	if s.Conjugate {
+		InvSqrtT(c, s.Bit)
+	} else {
+		SqrtT(c, s.Bit)
+	}
+}
+
+func (s *SqrtTGate) Inverse() Gate {
+	return &SqrtTGate{Bit: s.Bit, Conjugate: !s.Conjugate}
+}
+
 // FnGate is a gate that calls contained functions.
 type FnGate struct {
 	Forward  func(c Computer)
