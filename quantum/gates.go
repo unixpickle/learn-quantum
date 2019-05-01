@@ -192,3 +192,66 @@ func (s *SqrtNotGate) Inverse() Gate {
 		Invert: !s.Invert,
 	}
 }
+
+// A ClassicalGate applies a bitwise function to classical
+// bases states.
+// It can only be applied to *Simulator computers.
+type ClassicalGate struct {
+	F        func(b []bool) []bool
+	Inverted bool
+	Str      string
+}
+
+func NewClassicalGate(F func(b []bool) []bool, str string) *ClassicalGate {
+	if str == "" {
+		str = "ClassicalGate"
+	}
+	return &ClassicalGate{
+		F:   F,
+		Str: str,
+	}
+}
+
+func (c *ClassicalGate) Apply(qc Computer) {
+	s := qc.(*Simulation)
+	s1 := s.Copy()
+	if c.Inverted {
+		for i := range s1.Phases {
+			input := make([]bool, s.NumBits())
+			for j := range input {
+				input[j] = (i&(1<<uint(j)) != 0)
+			}
+			output := c.F(input)
+			outIdx := 0
+			for j, b := range output {
+				if b {
+					outIdx |= 1 << uint(j)
+				}
+			}
+			s.Phases[i] = s1.Phases[outIdx]
+		}
+	} else {
+		for i, phase := range s1.Phases {
+			input := make([]bool, s.NumBits())
+			for j := range input {
+				input[j] = (i&(1<<uint(j)) != 0)
+			}
+			output := c.F(input)
+			outIdx := 0
+			for j, b := range output {
+				if b {
+					outIdx |= 1 << uint(j)
+				}
+			}
+			s.Phases[outIdx] = phase
+		}
+	}
+}
+
+func (c *ClassicalGate) Inverse() Gate {
+	return &ClassicalGate{F: c.F, Inverted: !c.Inverted, Str: "Inv(" + c.Str + ")"}
+}
+
+func (c *ClassicalGate) String() string {
+	return c.Str
+}

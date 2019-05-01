@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
 	"fmt"
 
 	"github.com/unixpickle/learn-quantum/quantum"
@@ -10,8 +9,6 @@ import (
 const (
 	maxCircuitCache = 5000000
 )
-
-type SimHash [md5.Size]byte
 
 func AllGates(numBits int, includeCCNot bool) []quantum.Gate {
 	var result []quantum.Gate
@@ -42,20 +39,21 @@ func AllGates(numBits int, includeCCNot bool) []quantum.Gate {
 	return result
 }
 
-func Search(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quantum.Circuit {
-	ctx := newSearchContext(numBits, gates, gate)
-	goal := HashClassicalGate(numBits, ctx.InToOut)
-	backwards := map[SimHash]quantum.Circuit{}
+func Search(numBits int, gates []quantum.Gate, target quantum.Gate) quantum.Circuit {
+	ctx := newSearchContext(numBits, gates)
+	goal := ctx.Hasher.Hash(target)
+	backHasher := ctx.Hasher.Prefix(target)
+	backwards := map[quantum.CircuitHash]quantum.Circuit{}
 
 	for i := 1; i < len(ctx.Cache); i++ {
 		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing backward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
 			count -= 1
-			if HashCircuit(numBits, c) == goal {
+			if ctx.Hasher.Hash(c) == goal {
 				return c
 			}
-			backwards[HashCircuitBackwards(numBits, c, ctx.InToOut)] = c
+			backwards[backHasher.Hash(c.Inverse())] = c
 		}
 	}
 
@@ -63,7 +61,7 @@ func Search(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quant
 		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
-			if c1, ok := backwards[HashCircuit(numBits, c)]; ok {
+			if c1, ok := backwards[ctx.Hasher.Hash(c)]; ok {
 				return append(c, c1...)
 			}
 		}
@@ -72,16 +70,16 @@ func Search(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quant
 	return nil
 }
 
-func SearchSqrt(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) quantum.Circuit {
-	ctx := newSearchContext(numBits, gates, gate)
-	goal := HashClassicalGate(numBits, ctx.InToOut)
+func SearchSqrt(numBits int, gates []quantum.Gate, target quantum.Gate) quantum.Circuit {
+	ctx := newSearchContext(numBits, gates)
+	goal := ctx.Hasher.Hash(target)
 
 	for i := 1; i < 100; i++ {
 		count, ch := ctx.Enumerate(i)
 		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
 			c1 := append(append(quantum.Circuit{}, c...), c...)
-			if HashCircuit(numBits, c1) == goal {
+			if ctx.Hasher.Hash(c1) == goal {
 				return c
 			}
 		}
@@ -91,50 +89,29 @@ func SearchSqrt(numBits int, gates []quantum.Gate, gate func(b []bool) []bool) q
 }
 
 func SearchCtrl(numBits int, gates []quantum.Gate, gate quantum.Gate) quantum.Circuit {
-	ctx := newSearchContext(numBits, gates, nil)
-	var data []byte
-	for i := 0; i < (1 << uint(numBits)); i++ {
-		sim := quantum.NewSimulationBits(numBits, uint(i))
-		if i&1 != 0 {
-			gate.Apply(sim)
-		}
-		data = append(data, encodeQuantumState(sim)...)
-	}
-	goal := md5.Sum(data)
-
-	for i := 1; i < 100; i++ {
-		count, ch := ctx.Enumerate(i)
-		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
-		for c := range ch {
-			if HashCircuit(numBits, c) == goal {
-				return c
-			}
-		}
-	}
-
-	return nil
+	return Search(numBits, gates, &ctrlGate{gate})
 }
 
 type searchContext struct {
 	NumBits int
-	InToOut []int
 	Gates   []quantum.Gate
 	Cache   [][]quantum.Circuit
+	Hasher  quantum.CircuitHasher
 }
 
-func newSearchContext(numBits int, gates []quantum.Gate, gate func([]bool) []bool) *searchContext {
+func newSearchContext(numBits int, gates []quantum.Gate) *searchContext {
 	var oneStep []quantum.Circuit
 	for _, g := range gates {
 		oneStep = append(oneStep, quantum.Circuit{g})
 	}
 	res := &searchContext{
 		NumBits: numBits,
-		InToOut: computeInToOut(numBits, gate),
 		Gates:   gates,
 		Cache: [][]quantum.Circuit{
 			[]quantum.Circuit{quantum.Circuit{}},
 			oneStep,
 		},
+		Hasher: quantum.NewCircuitHasher(numBits),
 	}
 
 	var numCircuits int
@@ -142,12 +119,12 @@ func newSearchContext(numBits int, gates []quantum.Gate, gate func([]bool) []boo
 CacheLoop:
 	for i := 2; i <= 15; i++ {
 		fmt.Println("Generating circuit cache at depth", i, "...")
-		next := map[SimHash]quantum.Circuit{}
+		next := map[quantum.CircuitHash]quantum.Circuit{}
 		_, ch := res.Enumerate(i)
 		for c := range ch {
-			hash := HashCircuit(res.NumBits, c)
+			hash := res.Hasher.Hash(c)
 			if _, ok := next[hash]; !ok {
-				next[HashCircuit(res.NumBits, c)] = c
+				next[hash] = c
 				numCircuits++
 			}
 			if numCircuits > maxCircuitCache {
@@ -190,24 +167,30 @@ func (s *searchContext) Enumerate(numGates int) (int, <-chan quantum.Circuit) {
 	return len(cached) * subCount, ch
 }
 
-func computeInToOut(numBits int, gate func(b []bool) []bool) []int {
-	if gate == nil {
-		return nil
-	}
-	inToOut := make([]int, 1<<uint(numBits))
-	for i := 0; i < 1<<uint(numBits); i++ {
-		input := make([]bool, numBits)
-		for j := range input {
-			input[j] = (i&(1<<uint(j)) != 0)
+type ctrlGate struct {
+	G quantum.Gate
+}
+
+func (c *ctrlGate) Apply(qc quantum.Computer) {
+	s1 := qc.(*quantum.Simulation)
+	s2 := s1.Copy()
+	for i := range s1.Phases {
+		if i&1 == 0 {
+			s2.Phases[i] = 0
+		} else {
+			s1.Phases[i] = 0
 		}
-		output := gate(input)
-		outInt := 0
-		for j, b := range output {
-			if b {
-				outInt |= 1 << uint(j)
-			}
-		}
-		inToOut[i] = outInt
 	}
-	return inToOut
+	c.G.Apply(s2)
+	for i, phase := range s2.Phases {
+		s1.Phases[i] += phase
+	}
+}
+
+func (c *ctrlGate) Inverse() quantum.Gate {
+	return &ctrlGate{G: c.G.Inverse()}
+}
+
+func (c *ctrlGate) String() string {
+	return "Ctrl(" + c.G.String() + ")"
 }
