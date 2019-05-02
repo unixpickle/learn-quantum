@@ -218,3 +218,31 @@ func formatFloat(f float64) string {
 	}
 	return res
 }
+
+// A MappedComputer is a Computer that contains a subset
+// of the qubits on some other computer.
+// It can be used to permute or reduce the number of
+// qubits that gates act on.
+type MappedComputer struct {
+	C Computer
+
+	// Mapping maps each qubit on this computer to qubits
+	// in C.
+	Mapping []int
+}
+
+func (m *MappedComputer) NumBits() int {
+	return len(m.Mapping)
+}
+
+func (m *MappedComputer) Measure(bitIdx int) bool {
+	return m.C.Measure(m.Mapping[bitIdx])
+}
+
+func (m *MappedComputer) Unitary(target int, m11, m12, m21, m22 complex128) {
+	m.C.Unitary(m.Mapping[target], m11, m12, m21, m22)
+}
+
+func (m *MappedComputer) CNot(control, target int) {
+	m.C.CNot(m.Mapping[control], m.Mapping[target])
+}
