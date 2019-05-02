@@ -94,3 +94,54 @@ func (c *CircuitGen) extendCache() bool {
 	c.cache = append(c.cache, next)
 	return true
 }
+
+// A BackwardsMap keeps track of the latter half of
+// circuits for a bidirectional search.
+type BackwardsMap struct {
+	hasher     CircuitHasher
+	backHasher CircuitHasher
+	goal       CircuitHash
+	m          map[CircuitHash]Gate
+}
+
+// NewBackwardsMap creates a BackwardsMap that operates
+// with respect to the end state achieved by a goal.
+//
+// It uses the hasher c for internal logic.
+func NewBackwardsMap(c CircuitHasher, goal Gate) *BackwardsMap {
+	return &BackwardsMap{
+		hasher:     c,
+		backHasher: c.Prefix(goal),
+		goal:       c.Hash(goal),
+		m:          map[CircuitHash]Gate{},
+	}
+}
+
+// AddCircuit adds the circuit to the reverse mapping.
+// Circuits should be added in order of size.
+func (b *BackwardsMap) AddCircuit(c Circuit) {
+	backHash := b.backHasher.Hash(c.Inverse())
+	if _, ok := b.m[backHash]; !ok {
+		b.m[backHash] = c[0]
+	}
+}
+
+// Lookup finds the shortest suffix to complete the given
+// prefix of the solution.
+//
+// If no circuit is found, nil is returned.
+func (b *BackwardsMap) Lookup(prefix Circuit) Circuit {
+	var res Circuit
+	hasher := b.hasher.Prefix(prefix)
+	h := hasher.Hash(Circuit{})
+	for h != b.goal {
+		if g, ok := b.m[h]; !ok {
+			return nil
+		} else {
+			res = append(res, g)
+			hasher = hasher.Prefix(g)
+			h = hasher.Hash(Circuit{})
+		}
+	}
+	return res
+}

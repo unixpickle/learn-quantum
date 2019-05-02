@@ -41,8 +41,7 @@ func Search(numBits int, gates []quantum.Gate, target quantum.Gate) quantum.Circ
 	gen := quantum.NewCircuitGen(numBits, gates, maxCircuitCache)
 	hasher := quantum.NewCircuitHasher(numBits)
 	goal := hasher.Hash(target)
-	backHasher := hasher.Prefix(target)
-	backwards := map[quantum.CircuitHash]quantum.Circuit{}
+	backwards := quantum.NewBackwardsMap(hasher, target)
 
 	for i := 1; true; i++ {
 		circuits := gen.GenerateSlice(i)
@@ -54,7 +53,7 @@ func Search(numBits int, gates []quantum.Gate, target quantum.Gate) quantum.Circ
 			if hasher.Hash(c) == goal {
 				return c
 			}
-			backwards[backHasher.Hash(c.Inverse())] = c
+			backwards.AddCircuit(c)
 		}
 	}
 
@@ -62,7 +61,7 @@ func Search(numBits int, gates []quantum.Gate, target quantum.Gate) quantum.Circ
 		ch, count := gen.Generate(i)
 		fmt.Println("Doing forward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
-			if c1, ok := backwards[hasher.Hash(c)]; ok {
+			if c1 := backwards.Lookup(c); c1 != nil {
 				return append(c, c1...)
 			}
 		}
