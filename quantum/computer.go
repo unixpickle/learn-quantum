@@ -92,7 +92,6 @@ func (s *Simulation) Unitary(target int, m11, m12, m21, m22 complex128) {
 	if target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
-	res := make([]complex128, len(s.Phases))
 	for i := range s.Phases {
 		if i&(1<<uint(target)) != 0 {
 			continue
@@ -100,22 +99,23 @@ func (s *Simulation) Unitary(target int, m11, m12, m21, m22 complex128) {
 		other := i | (1 << uint(target))
 		p0 := s.Phases[i]
 		p1 := s.Phases[other]
-		res[i] += m11*p0 + m12*p1
-		res[other] += m21*p0 + m22*p1
+		s.Phases[i] = m11*p0 + m12*p1
+		s.Phases[other] = m21*p0 + m22*p1
 	}
-	s.Phases = res
 }
 
 func (s *Simulation) CNot(control, target int) {
 	if control < 0 || control >= s.numBits || target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
-	res := make([]complex128, len(s.Phases))
-	for i, phase := range s.Phases {
-		b1 := (i & (1 << uint(control))) >> uint(control)
-		res[i^(b1<<uint(target))] = phase
+	controlMask := 1 << uint(control)
+	targetMask := 1 << uint(target)
+	for i := range s.Phases {
+		if i&controlMask != 0 && i&targetMask == 0 {
+			other := i | targetMask
+			s.Phases[i], s.Phases[other] = s.Phases[other], s.Phases[i]
+		}
 	}
-	s.Phases = res
 }
 
 func (s *Simulation) Phase(value []bool) complex128 {
