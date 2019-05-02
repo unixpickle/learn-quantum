@@ -235,6 +235,23 @@ func (s *SqrtTGate) Inverse() Gate {
 	return &SqrtTGate{Bit: s.Bit, Conjugate: !s.Conjugate}
 }
 
+type SwapGate struct {
+	A int
+	B int
+}
+
+func (s *SwapGate) String() string {
+	return fmt.Sprintf("Swap(%d, %d)", s.A, s.B)
+}
+
+func (s *SwapGate) Apply(c Computer) {
+	Swap(c, s.A, s.B)
+}
+
+func (s *SwapGate) Inverse() Gate {
+	return s
+}
+
 // FnGate is a gate that calls contained functions.
 type FnGate struct {
 	Forward  func(c Computer)
