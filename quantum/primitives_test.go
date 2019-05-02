@@ -1,9 +1,34 @@
 package quantum
 
 import (
+	"fmt"
+	"math"
 	"math/cmplx"
 	"testing"
 )
+
+func BenchmarkUnitary(b *testing.B) {
+	for _, size := range []int{1, 5, 10} {
+		b.Run(fmt.Sprintf("Bits%d", size), func(b *testing.B) {
+			s := RandomSimulation(size)
+			coeff := complex(1.0/math.Sqrt2, 0)
+			for i := 0; i < b.N; i++ {
+				s.Unitary(i%size, coeff, coeff, coeff, -coeff)
+			}
+		})
+	}
+}
+
+func BenchmarkCNot(b *testing.B) {
+	for _, size := range []int{2, 5, 10} {
+		b.Run(fmt.Sprintf("Bits%d", size), func(b *testing.B) {
+			s := RandomSimulation(size)
+			for i := 0; i < b.N; i++ {
+				s.CNot(i%size, (i+1)%size)
+			}
+		})
+	}
+}
 
 func TestCSqrtNot(t *testing.T) {
 	testControl(t, SqrtNot, InvSqrtNot, CSqrtNot, InvCSqrtNot)
