@@ -92,6 +92,28 @@ func Swap(c Computer, a, b int) {
 	c.CNot(a, b)
 }
 
+// CSwap swaps two qubits conditioned on a control qubit.
+func CSwap(c Computer, control, a, b int) {
+	// Found via search.
+	c.CNot(a, b)
+	H(c, a)
+	c.CNot(control, a)
+	T(c, control)
+	InvT(c, a)
+	c.CNot(b, a)
+	T(c, a)
+	c.CNot(control, a)
+	c.CNot(b, control)
+	InvT(c, control)
+	InvT(c, a)
+	c.CNot(b, a)
+	c.CNot(b, control)
+	T(c, b)
+	T(c, a)
+	H(c, a)
+	c.CNot(a, b)
+}
+
 // SqrtSwap perfroms the square root of the Swap gate.
 func SqrtSwap(c Computer, a, b int) {
 	// Found via search.

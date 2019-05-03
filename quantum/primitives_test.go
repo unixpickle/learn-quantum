@@ -56,6 +56,23 @@ func TestSqrtSwap(t *testing.T) {
 	}
 }
 
+func TestCSwap(t *testing.T) {
+	g1 := &CSwapGate{1, 2, 3}
+	g2 := &ClassicalGate{
+		F: func(b []bool) []bool {
+			res := append([]bool{}, b...)
+			if res[1] {
+				res[2], res[3] = res[3], res[2]
+			}
+			return res
+		},
+	}
+	hasher := NewCircuitHasher(4)
+	if hasher.Hash(g1) != hasher.Hash(g2) {
+		t.Error("invalid circuit")
+	}
+}
+
 func testControl(t *testing.T, fwd func(c Computer, bit int), inv func(c Computer, bit int),
 	controlled func(c Computer, ctrl, targ int),
 	controlledInv func(c Computer, ctrl, targ int)) {

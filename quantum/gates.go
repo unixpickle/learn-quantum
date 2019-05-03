@@ -282,6 +282,24 @@ func (s *SwapGate) Inverse() Gate {
 	return s
 }
 
+type CSwapGate struct {
+	Control int
+	A       int
+	B       int
+}
+
+func (c *CSwapGate) String() string {
+	return fmt.Sprintf("CSwap(%d, %d, %d)", c.Control, c.A, c.B)
+}
+
+func (c *CSwapGate) Apply(comp Computer) {
+	CSwap(comp, c.Control, c.A, c.B)
+}
+
+func (c *CSwapGate) Inverse() Gate {
+	return c
+}
+
 // FnGate is a gate that calls contained functions.
 type FnGate struct {
 	Forward  func(c Computer)
