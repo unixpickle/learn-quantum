@@ -210,6 +210,36 @@ func (s *SqrtNotGate) Inverse() Gate {
 	}
 }
 
+type CSqrtNotGate struct {
+	Control int
+	Target  int
+	Invert  bool
+}
+
+func (c *CSqrtNotGate) String() string {
+	if c.Invert {
+		return fmt.Sprintf("CSqrtNot*(%d, %d)", c.Control, c.Target)
+	} else {
+		return fmt.Sprintf("CSqrtNot(%d, %d)", c.Control, c.Target)
+	}
+}
+
+func (c *CSqrtNotGate) Apply(comp Computer) {
+	if c.Invert {
+		InvCSqrtNot(comp, c.Control, c.Target)
+	} else {
+		CSqrtNot(comp, c.Control, c.Target)
+	}
+}
+
+func (c *CSqrtNotGate) Inverse() Gate {
+	return &CSqrtNotGate{
+		Control: c.Control,
+		Target:  c.Target,
+		Invert:  !c.Invert,
+	}
+}
+
 type SqrtTGate struct {
 	Bit       int
 	Conjugate bool

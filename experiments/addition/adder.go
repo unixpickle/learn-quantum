@@ -4,13 +4,13 @@ import (
 	"github.com/unixpickle/learn-quantum/quantum"
 )
 
-type AdderGate struct{}
+type AddGate struct{}
 
-func (_ AdderGate) String() string {
-	return "Adder"
+func (_ AddGate) String() string {
+	return "Add"
 }
 
-func (_ AdderGate) Apply(c quantum.Computer) {
+func (_ AddGate) Apply(c quantum.Computer) {
 	s := c.(*quantum.Simulation)
 	s1 := s.Copy()
 	for i, phase := range s1.Phases {
@@ -20,17 +20,17 @@ func (_ AdderGate) Apply(c quantum.Computer) {
 	}
 }
 
-func (_ AdderGate) Inverse() quantum.Gate {
-	return SubtractorGate{}
+func (_ AddGate) Inverse() quantum.Gate {
+	return SubGate{}
 }
 
-type SubtractorGate struct{}
+type SubGate struct{}
 
-func (_ SubtractorGate) String() string {
-	return "Subtractor"
+func (_ SubGate) String() string {
+	return "Sub"
 }
 
-func (_ SubtractorGate) Apply(c quantum.Computer) {
+func (_ SubGate) Apply(c quantum.Computer) {
 	s := c.(*quantum.Simulation)
 	s1 := s.Copy()
 	for i, phase := range s1.Phases {
@@ -40,8 +40,8 @@ func (_ SubtractorGate) Apply(c quantum.Computer) {
 	}
 }
 
-func (_ SubtractorGate) Inverse() quantum.Gate {
-	return AdderGate{}
+func (_ SubGate) Inverse() quantum.Gate {
+	return AddGate{}
 }
 
 func adderPairs(numBits, state int) (uint32, uint32) {

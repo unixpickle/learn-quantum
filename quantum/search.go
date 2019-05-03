@@ -130,7 +130,7 @@ func (b *BackwardsMap) AddCircuit(c Circuit) {
 // prefix of the solution.
 //
 // If no circuit is found, nil is returned.
-func (b *BackwardsMap) Lookup(prefix Circuit) Circuit {
+func (b *BackwardsMap) Lookup(prefix Gate) Circuit {
 	var res Circuit
 	hasher := b.hasher.Prefix(prefix)
 	h := hasher.Hash(Circuit{})
