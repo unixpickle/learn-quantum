@@ -21,7 +21,11 @@ func main() {
 		ch, count := gen.Generate(i)
 		fmt.Println("Doing backward search of depth", i, "with", count, "permutations...")
 		for c := range ch {
-			backward.AddCircuit(c)
+			c1 := append(quantum.Circuit{}, c...)
+			for j, g := range c {
+				c1[j] = &EndGate{Gate: g}
+			}
+			backward.AddCircuit(c1)
 		}
 	}
 

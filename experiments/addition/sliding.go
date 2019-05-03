@@ -40,3 +40,26 @@ func (s *SlidingGate) Apply(c quantum.Computer) {
 func (s *SlidingGate) Inverse() quantum.Gate {
 	return &SlidingGate{Gate: s.Gate, Invert: !s.Invert}
 }
+
+// An EndGate is a 4-qubit gate that is run on the final
+// qubits in a circuit.
+type EndGate struct {
+	Gate quantum.Gate
+}
+
+func (e *EndGate) String() string {
+	return "EndGate(" + e.Gate.String() + ")"
+}
+
+func (e *EndGate) Apply(c quantum.Computer) {
+	i := c.NumBits() - 4
+	mapped := &quantum.MappedComputer{
+		C:       c,
+		Mapping: []int{i, i + 1, i + 2, i + 3},
+	}
+	e.Gate.Apply(mapped)
+}
+
+func (e *EndGate) Inverse() quantum.Gate {
+	return &EndGate{Gate: e.Gate.Inverse()}
+}
