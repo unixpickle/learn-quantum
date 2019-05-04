@@ -106,7 +106,7 @@ def sliding_expander(matrix):
         expanders.append(matrix.expander(NUM_BITS, [i, i+1, i+2, i+3]))
 
     def fn():
-        res = ComplexMatrix.eye(1 << NUM_BITS).to(matrix.real.device())
+        res = ComplexMatrix.eye(1 << NUM_BITS).to(matrix.real.device)
         for x in expanders:
             res = x().mul(res)
         return res
