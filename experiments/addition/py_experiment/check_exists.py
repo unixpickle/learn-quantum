@@ -15,15 +15,15 @@ NUM_BITS = SUM_BITS * 2
 def main():
     target_matrix = compute_target_matrix()
     forward = ComplexMatrix.random(16)
-    final = ComplexMatrix.random(16)
+    backward = ComplexMatrix.random(16)
 
     # Check that expanding still produces a unitary matrix.
     #     x = forward.expander(5, [0, 1, 2, 3])()
     #     print(x.mul(x.H()).real)
 
     exp_1 = sliding_expander(forward)
-    exp_2 = final.expander(NUM_BITS, [NUM_BITS - 4, NUM_BITS - 3, NUM_BITS - 2, NUM_BITS - 1])
-    sgd = optim.SGD([forward.real, forward.imag, final.real, final.imag], lr=200)
+    exp_2 = sliding_expander(backward, forward=False)
+    sgd = optim.SGD([forward.real, forward.imag, backward.real, backward.imag], lr=200)
 
     while True:
         product = exp_2().mul(exp_1())
@@ -34,7 +34,7 @@ def main():
         print('loss=%.8f' % diff.item())
 
         forward.orthogonalize()
-        final.orthogonalize()
+        backward.orthogonalize()
 
 
 class ComplexMatrix:
@@ -93,9 +93,9 @@ class ComplexMatrix:
         self.imag.data = torch.from_numpy(imag)
 
 
-def sliding_expander(matrix):
+def sliding_expander(matrix, forward=True):
     expanders = []
-    for i in range(0, NUM_BITS - 3, 2):
+    for i in (range(0, NUM_BITS - 3, 2) if forward else range(NUM_BITS - 4, -1, -2)):
         expanders.append(matrix.expander(NUM_BITS, [i, i+1, i+2, i+3]))
 
     def fn():
