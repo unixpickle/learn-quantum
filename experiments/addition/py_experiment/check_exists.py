@@ -13,11 +13,9 @@ NUM_BITS = SUM_BITS * 2
 
 
 def main():
-    device = torch.device('cpu')
-
-    target_matrix = compute_target_matrix().to(device)
-    forward = ComplexMatrix.random(16).to(device)
-    final = ComplexMatrix.random(16).to(device)
+    target_matrix = compute_target_matrix()
+    forward = ComplexMatrix.random(16)
+    final = ComplexMatrix.random(16)
 
     # Check that expanding still produces a unitary matrix.
     #     x = forward.expander(5, [0, 1, 2, 3])()
@@ -56,11 +54,6 @@ class ComplexMatrix:
         eye = torch.eye(size)
         return cls(eye, torch.zeros_like(eye))
 
-    def to(self, device):
-        self.real.data = self.real.data.to(device)
-        self.imag.data = self.imag.data.to(device)
-        return self
-
     def H(self):
         return ComplexMatrix(self.real.transpose(1, 0), -self.imag.transpose(1, 0))
 
@@ -96,8 +89,8 @@ class ComplexMatrix:
         orthog = np.dot(u, vh)
         real = np.real(orthog).astype(np.float32)
         imag = np.imag(orthog).astype(np.float32)
-        self.real.data = torch.from_numpy(real).to(self.real.device)
-        self.imag.data = torch.from_numpy(imag).to(self.imag.device)
+        self.real.data = torch.from_numpy(real)
+        self.imag.data = torch.from_numpy(imag)
 
 
 def sliding_expander(matrix):
@@ -106,7 +99,7 @@ def sliding_expander(matrix):
         expanders.append(matrix.expander(NUM_BITS, [i, i+1, i+2, i+3]))
 
     def fn():
-        res = ComplexMatrix.eye(1 << NUM_BITS).to(matrix.real.device)
+        res = ComplexMatrix.eye(1 << NUM_BITS)
         for x in expanders:
             res = x().mul(res)
         return res
