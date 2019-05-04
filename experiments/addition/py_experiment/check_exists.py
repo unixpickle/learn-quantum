@@ -57,7 +57,9 @@ class ComplexMatrix:
         return cls(eye, torch.zeros_like(eye))
 
     def to(self, device):
-        return ComplexMatrix(self.real.to(device), self.imag.to(device))
+        self.real.data = self.real.data.to(device)
+        self.imag.data = self.imag.data.to(device)
+        return self
 
     def H(self):
         return ComplexMatrix(self.real.transpose(1, 0), -self.imag.transpose(1, 0))
@@ -96,8 +98,6 @@ class ComplexMatrix:
         imag = np.imag(orthog).astype(np.float32)
         self.real.data = torch.from_numpy(real).to(self.real.device)
         self.imag.data = torch.from_numpy(imag).to(self.imag.device)
-        self.real.data.requires_grad = False
-        self.imag.data.requires_grad = False
 
 
 def sliding_expander(matrix):
