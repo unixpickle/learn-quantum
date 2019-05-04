@@ -23,7 +23,7 @@ def main():
 
     exp_1 = sliding_expander(forward)
     exp_2 = final.expander(NUM_BITS, [NUM_BITS - 4, NUM_BITS - 3, NUM_BITS - 2, NUM_BITS - 1])
-    sgd = optim.SGD([forward.real, forward.imag, final.real, final.imag], lr=1000)
+    sgd = optim.SGD([forward.real, forward.imag, final.real, final.imag], lr=200)
 
     while True:
         product = exp_2().mul(exp_1())
