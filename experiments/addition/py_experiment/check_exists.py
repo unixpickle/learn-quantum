@@ -25,14 +25,14 @@ def main():
 
     exp_1 = sliding_expander(forward)
     exp_2 = final.expander(NUM_BITS, [NUM_BITS - 4, NUM_BITS - 3, NUM_BITS - 2, NUM_BITS - 1])
-    adam = optim.SGD([forward.real, forward.imag, final.real, final.imag], lr=1000)
+    sgd = optim.SGD([forward.real, forward.imag, final.real, final.imag], lr=1000)
 
     while True:
         product = exp_2().mul(exp_1())
         diff = torch.mean(torch.pow(target_matrix - product.real, 2))
-        adam.zero_grad()
+        sgd.zero_grad()
         diff.backward()
-        adam.step()
+        sgd.step()
         print('loss=%.8f' % diff.item())
 
         forward.orthogonalize()
