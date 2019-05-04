@@ -96,6 +96,8 @@ class ComplexMatrix:
         imag = np.imag(orthog).astype(np.float32)
         self.real.data = torch.from_numpy(real).to(self.real.device)
         self.imag.data = torch.from_numpy(imag).to(self.imag.device)
+        self.real.data.requires_grad = False
+        self.imag.data.requires_grad = False
 
 
 def sliding_expander(matrix):
