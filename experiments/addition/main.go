@@ -35,7 +35,7 @@ func main() {
 		for c := range ch {
 			forward := &SlidingGate{Gate: c}
 			if tail := backward.Lookup(forward); tail != nil {
-				fmt.Println(append(c, tail))
+				fmt.Println(append(quantum.Circuit{forward}, tail...))
 				return
 			}
 		}
