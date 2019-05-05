@@ -34,7 +34,6 @@ func NewSymHasher(numBits int) CircuitHasher {
 		state.Phases[i] *= normalizer
 	}
 
-	roundHashStart(state)
 	return &symHasher{startState: state}
 }
 
