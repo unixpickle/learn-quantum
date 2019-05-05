@@ -29,7 +29,7 @@ def main():
                      middle.real, middle.imag], lr=200)
 
     while True:
-        product = exp_3.mul(exp_2().mul(exp_1()))
+        product = exp_3().mul(exp_2().mul(exp_1()))
         diff = torch.mean(torch.pow(target_matrix - product.real, 2))
         sgd.zero_grad()
         diff.backward()
