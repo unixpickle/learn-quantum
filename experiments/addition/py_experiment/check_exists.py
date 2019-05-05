@@ -16,17 +16,20 @@ def main():
     target_matrix = compute_target_matrix()
     forward = ComplexMatrix.random(16)
     backward = ComplexMatrix.random(16)
+    middle = ComplexMatrix.random(16)
 
     # Check that expanding still produces a unitary matrix.
     #     x = forward.expander(5, [0, 1, 2, 3])()
     #     print(x.mul(x.H()).real)
 
     exp_1 = sliding_expander(forward)
-    exp_2 = sliding_expander(backward, forward=False)
-    sgd = optim.SGD([forward.real, forward.imag, backward.real, backward.imag], lr=200)
+    exp_2 = middle.expander(NUM_BITS, list(range(NUM_BITS - 4, NUM_BITS)))
+    exp_3 = sliding_expander(backward, forward=False)
+    sgd = optim.SGD([forward.real, forward.imag, backward.real, backward.imag,
+                     middle.real, middle.imag], lr=200)
 
     while True:
-        product = exp_2().mul(exp_1())
+        product = exp_3.mul(exp_2().mul(exp_1()))
         diff = torch.mean(torch.pow(target_matrix - product.real, 2))
         sgd.zero_grad()
         diff.backward()
@@ -35,6 +38,7 @@ def main():
 
         forward.orthogonalize()
         backward.orthogonalize()
+        middle.orthogonalize()
 
 
 class ComplexMatrix:
