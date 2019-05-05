@@ -80,7 +80,7 @@ func (s *symHasher) Hash(g Gate) CircuitHash {
 	}, perm)
 
 	data := make([]byte, len(sim.Phases)*8)
-	for i := 0; i < len(sim.Phases); i++ {
+	for i := range phaseEnc {
 		n := phaseEnc[invPermuteBits(perm, i)]
 		for j := 0; j < 8; j++ {
 			data[i*8+j] = byte(n >> uint(j*8))
