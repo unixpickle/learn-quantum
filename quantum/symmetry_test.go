@@ -12,17 +12,17 @@ func TestSymHasher(t *testing.T) {
 
 	// Check that the hash doesn't identify different
 	// circuits.
-	// if hasher.Hash(&XGate{Bit: 0}) == hasher.Hash(Circuit{}) {
-	// 	t.Error("hash collision")
-	// }
+	if hasher.Hash(&XGate{Bit: 0}) == hasher.Hash(Circuit{}) {
+		t.Error("hash collision")
+	}
 
-	// if hasher.Hash(&HGate{Bit: 0}) == hasher.Hash(Circuit{}) {
-	// 	t.Error("hash collision")
-	// }
+	if hasher.Hash(&HGate{Bit: 0}) == hasher.Hash(Circuit{}) {
+		t.Error("hash collision")
+	}
 
 	// Check that the hash identifies permutations of the
 	// same circuits.
-	for seed := 0; seed < 10; seed++ {
+	for seed := 0; seed < 100; seed++ {
 		hash := hasher.Hash(randomizedCircuit(rand.Perm(symTestNumBits), seed))
 		for i := 0; i < 10; i++ {
 			if hasher.Hash(randomizedCircuit(rand.Perm(symTestNumBits), seed)) != hash {
