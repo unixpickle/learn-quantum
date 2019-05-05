@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"math"
 	"math/cmplx"
+	"math/rand"
 
 	"github.com/unixpickle/essentials"
 )
@@ -16,29 +17,33 @@ type symHasher struct {
 // hashes for circuits that are equivalent up to a
 // permutation of the qubits.
 func NewSymHasher(numBits int) CircuitHasher {
-	s1 := RandomSimulation(numBits)
+	coefficients := make([]complex128, numBits+1)
+	for i := range coefficients {
+		coefficients[i] = complex(rand.Float64(), rand.Float64())
+	}
 
-	// Create a symmetric start state by adding all of the
-	// permutations of s1 together.
-	sum := NewSimulation(numBits)
-	sum.Phases[0] = 0
-	for _, perm := range permutations(numBits) {
-		for i, p := range s1.Phases {
-			sum.Phases[permuteBits(perm, i)] += p
+	state := NewSimulation(numBits)
+	for i := range state.Phases {
+		var numOnes int
+		for j := 0; j < numBits; j++ {
+			if i&(1<<uint(j)) != 0 {
+				numOnes += 1
+			}
 		}
+		state.Phases[i] = coefficients[numOnes]
 	}
 
 	var mag float64
-	for _, p := range sum.Phases {
+	for _, p := range state.Phases {
 		mag += math.Pow(cmplx.Abs(p), 2)
 	}
 	normalizer := complex(1/math.Sqrt(mag), 0)
-	for i, p := range sum.Phases {
-		sum.Phases[i] = p * normalizer
+	for i := range state.Phases {
+		state.Phases[i] *= normalizer
 	}
 
-	roundHashStart(sum)
-	return &symHasher{startState: sum}
+	roundHashStart(state)
+	return &symHasher{startState: state}
 }
 
 func (s *symHasher) NumBits() int {
