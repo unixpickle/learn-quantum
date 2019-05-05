@@ -96,39 +96,6 @@ func (s *symHasher) Prefix(g Gate) CircuitHasher {
 	return &symHasher{startState: sim}
 }
 
-func permutations(length int) [][]int {
-	if length == 0 {
-		return [][]int{[]int{}}
-	}
-	var results [][]int
-	for _, perm := range permutations(length - 1) {
-		for i := 0; i <= len(perm); i++ {
-			newPerm := make([]int, length)
-			for j := 0; j <= len(perm); j++ {
-				if j == i {
-					newPerm[j] = length - 1
-				} else if j < i {
-					newPerm[j] = perm[j]
-				} else {
-					newPerm[j] = perm[j-1]
-				}
-			}
-			results = append(results, newPerm)
-		}
-	}
-	return results
-}
-
-func permuteBits(perm []int, num int) int {
-	var res int
-	for i, target := range perm {
-		if num&(1<<uint(target)) != 0 {
-			res |= 1 << uint(i)
-		}
-	}
-	return res
-}
-
 func invPermuteBits(perm []int, num int) int {
 	var res int
 	for i, target := range perm {
