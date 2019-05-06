@@ -3,6 +3,8 @@ Use projected gradient descent to uncover factorized
 quantum circuits for addition.
 """
 
+import cmath
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -26,7 +28,7 @@ def main():
     exp_2 = middle.expander(NUM_BITS, list(range(NUM_BITS - 4, NUM_BITS)))
     exp_3 = sliding_expander(backward, forward=False)
     sgd = optim.SGD([forward.real, forward.imag, backward.real, backward.imag,
-                     middle.real, middle.imag], lr=200)
+                     middle.real, middle.imag], lr=2)
 
     while True:
         product = exp_3().mul(exp_2().mul(exp_1()))
@@ -35,10 +37,6 @@ def main():
         diff.backward()
         sgd.step()
         print('loss=%.8f' % diff.item())
-
-        forward.orthogonalize()
-        backward.orthogonalize()
-        middle.orthogonalize()
 
 
 class ComplexMatrix:
@@ -68,7 +66,8 @@ class ComplexMatrix:
         exp = expand_operator(num_bits, bit_indices)
 
         def expand():
-            return ComplexMatrix(exp(self.real), exp(self.imag))
+            ortho = self.orthogonalize()
+            return ComplexMatrix(exp(ortho.real), exp(ortho.imag))
 
         return expand
 
@@ -81,20 +80,44 @@ class ComplexMatrix:
                              torch.matmul(self.real, other.imag) +
                              torch.matmul(self.imag, other.real))
 
+    def row(self, idx):
+        """
+        Get a row as a ComplexVector.
+        """
+        return ComplexVector(self.real[idx], self.imag[idx])
+
     def orthogonalize(self):
         """
-        Project this matrix onto the space of unitary
-        matrices.
+        Perform Gram-Schmidt to create a unitary matrix
+        from this one.
         """
-        real = self.real.detach().cpu().numpy()
-        imag = self.imag.detach().cpu().numpy()
-        full = real.astype(np.complex) + 1j * imag.astype(np.complex)
-        u, _, vh = np.linalg.svd(full)
-        orthog = np.dot(u, vh)
-        real = np.real(orthog).astype(np.float32)
-        imag = np.imag(orthog).astype(np.float32)
-        self.real.data = torch.from_numpy(real)
-        self.imag.data = torch.from_numpy(imag)
+        rows = []
+        for i in range(self.real.shape[0]):
+            row = self.row(i)
+            for other in rows:
+                dot = row.dot(other)
+                row = row.sub(other.scale(dot))
+            rows.append(row.scale(1 / cmath.sqrt(row.dot(row))))
+        return ComplexMatrix(torch.stack([r.real for r in rows]),
+                             torch.stack([r.imag for r in rows]))
+
+
+class ComplexVector:
+    def __init__(self, real, imag):
+        self.real = real
+        self.imag = imag
+
+    def dot(self, other):
+        return complex(torch.sum(self.real * other.real) + torch.sum(self.imag * other.imag),
+                       torch.sum(self.imag * other.real) - torch.sum(self.real * other.imag))
+
+    def scale(self, cmp):
+        real, imag = cmp.real, cmp.imag
+        return ComplexVector(real * self.real - imag * self.imag,
+                             real * self.imag + imag * self.real)
+
+    def sub(self, other):
+        return ComplexVector(self.real - other.real, self.imag - other.imag)
 
 
 def sliding_expander(matrix, forward=True):
