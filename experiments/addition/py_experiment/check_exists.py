@@ -30,11 +30,13 @@ def main():
 
     while True:
         product = exp_3().mul(exp_2().mul(exp_1()))
-        diff = torch.mean(torch.pow(target_matrix - product.real, 2))
+        all_diffs = torch.pow(target_matrix - product.real, 2)
+        approx_loss = torch.mean(all_diffs * torch.rand_like(all_diffs))
+        exact_loss = torch.mean(all_diffs)
         sgd.zero_grad()
-        diff.backward()
+        approx_loss.backward()
         sgd.step()
-        print('loss=%.8f' % diff.item())
+        print('loss=%.8f' % exact_loss.item())
 
         forward.orthogonalize()
         backward.orthogonalize()
