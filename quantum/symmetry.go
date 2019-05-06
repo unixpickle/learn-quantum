@@ -14,6 +14,10 @@ type symHasher struct {
 // NewSymHasher creates a CircuitHasher that yields equal
 // hashes for circuits that are equivalent up to a
 // permutation of the qubits.
+//
+// There may be false collisions, as the SymHasher is just
+// a heuristic. For example, the conditional swap gate
+// will yield a hash equivalent to the identity.
 func NewSymHasher(numBits int) CircuitHasher {
 	coefficients := make([]complex128, numBits+1)
 	for i := range coefficients {
