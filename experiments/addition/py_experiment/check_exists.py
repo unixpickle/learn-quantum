@@ -14,19 +14,23 @@ NUM_BITS = SUM_BITS * 2
 
 def main():
     target_matrix = compute_target_matrix()
+    start = ComplexMatrix.random(16)
     forward = ComplexMatrix.random(16)
     middle = ComplexMatrix.random(16)
     backward = ComplexMatrix.random(16)
     forward2 = ComplexMatrix.random(16)
     middle2 = ComplexMatrix.random(16)
     backward2 = ComplexMatrix.random(16)
+    end = ComplexMatrix.random(16)
 
     # Check that expanding still produces a unitary matrix.
     #     x = forward.expander(5, [0, 1, 2, 3])()
     #     print(x.mul(x.H()).real)
 
-    matrices = [forward, middle, backward, forward2, middle2, backward2]
+    matrices = [start, forward, middle, backward, forward2, middle2, backward2, end]
     expanders = [
+        start.expander(NUM_BITS, list(range(0, 4))),
+
         sliding_expander(forward),
         middle.expander(NUM_BITS, list(range(NUM_BITS - 4, NUM_BITS))),
         sliding_expander(backward, forward=False),
@@ -34,6 +38,8 @@ def main():
         sliding_expander(forward2),
         middle2.expander(NUM_BITS, list(range(NUM_BITS - 4, NUM_BITS))),
         sliding_expander(backward2, forward=False),
+
+        end.expander(NUM_BITS, list(range(0, 4))),
     ]
     sgd = optim.SGD([(m.real, m.imag)[i] for m in matrices for i in [0, 1]], lr=200)
 
