@@ -75,7 +75,7 @@ func allocWorking(c Computer, a int, b ...int) []int {
 	var res []int
 OuterLoop:
 	for i := 0; i < c.NumBits(); i++ {
-		if i == a {
+		if i == a || c.InUse(i) {
 			continue
 		}
 		for _, x := range b {

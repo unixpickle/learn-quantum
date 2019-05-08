@@ -14,6 +14,7 @@ const epsilon = 1e-8
 // A Computer is a generic quantum computer.
 type Computer interface {
 	NumBits() int
+	InUse(bit int) bool
 	Measure(bitIdx int) bool
 	Unitary(target int, m11, m12, m21, m22 complex128)
 	CNot(control, target int)
@@ -58,6 +59,13 @@ func RandomSimulation(numBits int) *Simulation {
 
 func (s *Simulation) NumBits() int {
 	return s.numBits
+}
+
+func (s *Simulation) InUse(bitIdx int) bool {
+	if bitIdx < 0 || bitIdx >= s.numBits {
+		panic("bit index out of range")
+	}
+	return false
 }
 
 func (s *Simulation) Measure(bitIdx int) bool {
@@ -233,6 +241,10 @@ type MappedComputer struct {
 
 func (m *MappedComputer) NumBits() int {
 	return len(m.Mapping)
+}
+
+func (m *MappedComputer) InUse(bitIdx int) bool {
+	return m.C.InUse(m.Mapping[bitIdx])
 }
 
 func (m *MappedComputer) Measure(bitIdx int) bool {
