@@ -13,7 +13,7 @@ func BenchmarkUnitary(b *testing.B) {
 			s := RandomSimulation(size)
 			coeff := complex(1.0/math.Sqrt2, 0)
 			for i := 0; i < b.N; i++ {
-				s.Unitary(i%size, coeff, coeff, coeff, -coeff)
+				s.Unitary(i%size, &Matrix2{coeff, coeff, coeff, -coeff})
 			}
 		})
 	}

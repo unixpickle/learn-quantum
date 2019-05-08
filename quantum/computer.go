@@ -16,7 +16,7 @@ type Computer interface {
 	NumBits() int
 	InUse(bit int) bool
 	Measure(bitIdx int) bool
-	Unitary(target int, m11, m12, m21, m22 complex128)
+	Unitary(target int, m *Matrix2)
 	CNot(control, target int)
 }
 
@@ -96,7 +96,7 @@ func (s *Simulation) Measure(bitIdx int) bool {
 	return isOne
 }
 
-func (s *Simulation) Unitary(target int, m11, m12, m21, m22 complex128) {
+func (s *Simulation) Unitary(target int, m *Matrix2) {
 	if target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
@@ -107,8 +107,8 @@ func (s *Simulation) Unitary(target int, m11, m12, m21, m22 complex128) {
 		other := i | (1 << uint(target))
 		p0 := s.Phases[i]
 		p1 := s.Phases[other]
-		s.Phases[i] = m11*p0 + m12*p1
-		s.Phases[other] = m21*p0 + m22*p1
+		s.Phases[i] = m.M11*p0 + m.M12*p1
+		s.Phases[other] = m.M21*p0 + m.M22*p1
 	}
 }
 
@@ -251,8 +251,8 @@ func (m *MappedComputer) Measure(bitIdx int) bool {
 	return m.C.Measure(m.Mapping[bitIdx])
 }
 
-func (m *MappedComputer) Unitary(target int, m11, m12, m21, m22 complex128) {
-	m.C.Unitary(m.Mapping[target], m11, m12, m21, m22)
+func (m *MappedComputer) Unitary(target int, mat *Matrix2) {
+	m.C.Unitary(m.Mapping[target], mat)
 }
 
 func (m *MappedComputer) CNot(control, target int) {

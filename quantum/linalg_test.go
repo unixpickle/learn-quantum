@@ -5,19 +5,29 @@ import (
 	"testing"
 )
 
-func TestRandomUnitary2(t *testing.T) {
+func TestRandomMatrix2(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		m11, m12, m21, m22 := randomUnitary2()
+		m := RandomMatrix2()
+		mH := m
+		mH.ConjTranspose()
+		m.Mul(&mH)
+		if cmplx.Abs(m.M11-1) > 1e-8 || cmplx.Abs(m.M22-1) > 1e-8 {
+			t.Error("invalid diagonal", m.M11, m.M22)
+		}
+		if cmplx.Abs(m.M12) > 1e-8 || cmplx.Abs(m.M21) > 1e-8 {
+			t.Error("invalid off-diagonal", m.M12, m.M21)
+		}
+	}
+}
 
-		s11 := m11*cmplx.Conj(m11) + m12*cmplx.Conj(m12)
-		s12 := m11*cmplx.Conj(m21) + m12*cmplx.Conj(m22)
-		s21 := m21*cmplx.Conj(m11) + m22*cmplx.Conj(m12)
-		s22 := m21*cmplx.Conj(m21) + m22*cmplx.Conj(m22)
-		if cmplx.Abs(s11-1) > 1e-8 || cmplx.Abs(s22-1) > 1e-8 {
-			t.Error("invalid diagonal", s11, s22)
-		}
-		if cmplx.Abs(s12) > 1e-8 || cmplx.Abs(s21) > 1e-8 {
-			t.Error("invalid off-diagonal", s12, s21)
-		}
+func TestMatrix2Sqrt(t *testing.T) {
+	m := RandomMatrix2()
+	s := m
+	s.Sqrt()
+	s.Mul(&s)
+
+	if cmplx.Abs(m.M11-s.M11) > 1e-8 || cmplx.Abs(m.M12-s.M12) > 1e-8 ||
+		cmplx.Abs(m.M21-s.M21) > 1e-8 || cmplx.Abs(m.M22-s.M22) > 1e-8 {
+		t.Error("incorrect square")
 	}
 }
