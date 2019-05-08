@@ -72,14 +72,19 @@ func (m *Matrix2) Sub(other *Matrix2) {
 		m.M22-other.M22
 }
 
-func (m *Matrix2) Sqrt() {
-	det := m.M11*m.M22 - m.M12*m.M21
-	trace := m.M11 + m.M22
+func (m *Matrix2) Det() complex128 {
+	return m.M11*m.M22 - m.M12*m.M21
+}
 
+func (m *Matrix2) Trace() complex128 {
+	return m.M11 + m.M22
+}
+
+func (m *Matrix2) Sqrt() {
 	// Using formula from https://en.wikipedia.org/wiki/Square_root_of_a_2_by_2_matrix
 
-	s := cmplx.Sqrt(det)
-	t := cmplx.Sqrt(trace + 2*s)
+	s := cmplx.Sqrt(m.Det())
+	t := cmplx.Sqrt(m.Trace() + 2*s)
 
 	m.M11 = (m.M11 + s) / t
 	m.M12 = m.M12 / t
