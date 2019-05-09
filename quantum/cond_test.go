@@ -7,12 +7,12 @@ import (
 	"testing"
 )
 
-func TestCondUnitary(t *testing.T) {
+func TestCUnitary(t *testing.T) {
 	testMat := func(t *testing.T, m *Matrix2) {
 		s1 := RandomSimulation(3)
 		s2 := s1.Copy()
-		rawCondUnitary(s1, 2, 1, m)
-		CondUnitary(s2, 2, 1, m)
+		rawCUnitary(s1, 2, 1, m)
+		CUnitary(s2, 2, 1, m)
 		if !s1.ApproxEqual(s2, 1e-8) {
 			t.Fatal("incorrect result")
 		}
@@ -63,7 +63,7 @@ func TestCondUnitary(t *testing.T) {
 	})
 }
 
-func rawCondUnitary(s *Simulation, control, target int, m *Matrix2) {
+func rawCUnitary(s *Simulation, control, target int, m *Matrix2) {
 	for i := range s.Phases {
 		if i&(1<<uint(target)) != 0 || i&(1<<uint(control)) == 0 {
 			continue

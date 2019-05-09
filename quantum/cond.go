@@ -5,7 +5,59 @@ import (
 	"math/cmplx"
 )
 
-func CondUnitary(c Computer, control, target int, m *Matrix2) {
+// Cond runs a function that only has an effect if a given
+// control bit is set. The function should not attempt to
+// modify the control bit.
+func Cond(c Computer, control int, f func(c Computer)) {
+	f(&CondComputer{Computer: c, Control: control})
+}
+
+// A CondComputer is a Computer that applies gates
+// conditioned on some qubit being set. Under the hood it
+// changes CNot gates to Toffoli gates, and Unitary gates
+// to controlled unitary gates.
+type CondComputer struct {
+	Computer Computer
+	Control  int
+}
+
+func (c *CondComputer) NumBits() int {
+	return c.Computer.NumBits()
+}
+
+func (c *CondComputer) InUse(bit int) bool {
+	return bit == c.Control || c.Computer.InUse(bit)
+
+}
+
+func (c *CondComputer) Measure(bitIdx int) bool {
+	return c.Computer.Measure(bitIdx)
+}
+
+func (c *CondComputer) Unitary(target int, m *Matrix2) {
+	if target == c.Control {
+		panic("cannot change control bit")
+	}
+	CUnitary(c.Computer, c.Control, target, m)
+}
+
+func (c *CondComputer) CNot(control, target int) {
+	if target == c.Control {
+		panic("cannot change control bit")
+	}
+	if control == c.Control {
+		c.Computer.CNot(control, target)
+	} else {
+		CCNot(c.Computer, c.Control, control, target)
+	}
+}
+
+// CUnitary applies the unitary matrix m to the target
+// qubit if the control qubit is set.
+//
+// The underlying implementation uses four unitaries and
+// two CNot gates.
+func CUnitary(c Computer, control, target int, m *Matrix2) {
 	if m.M12 == 0 && m.M21 == 0 {
 		if m.M11 == m.M22 {
 			c.Unitary(control, &Matrix2{1, 0, 0, m.M11})
@@ -21,12 +73,12 @@ func CondUnitary(c Computer, control, target int, m *Matrix2) {
 			c.Unitary(target, &sqrt)
 		} else {
 			phase := m.M11
-			CondUnitary(c, control, target, &Matrix2{phase, 0, 0, phase})
-			CondUnitary(c, control, target, &Matrix2{1, 0, 0, m.M22 / phase})
+			CUnitary(c, control, target, &Matrix2{phase, 0, 0, phase})
+			CUnitary(c, control, target, &Matrix2{1, 0, 0, m.M22 / phase})
 		}
 		return
 	} else if m.M22 == 0 && m.M11 == 0 {
-		CondUnitary(c, control, target, &Matrix2{m.M21, 0, 0, m.M12})
+		CUnitary(c, control, target, &Matrix2{m.M21, 0, 0, m.M12})
 		c.CNot(control, target)
 		return
 	}
@@ -61,7 +113,7 @@ func CondUnitary(c Computer, control, target int, m *Matrix2) {
 	c.Unitary(target, &mat2)
 	c.CNot(control, target)
 	c.Unitary(target, &mat1)
-	CondUnitary(c, control, target, &mat4)
+	CUnitary(c, control, target, &mat4)
 }
 
 func rotateY(theta float64) Matrix2 {
