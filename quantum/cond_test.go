@@ -37,6 +37,30 @@ func TestCondUnitary(t *testing.T) {
 			testMat(t, &mat)
 		}
 	})
+	t.Run("NumericalErrors", func(t *testing.T) {
+		num := complex(1/math.Sqrt2, 0)
+		h := Matrix2{num, num, num, -num}
+		T := Matrix2{1, 0, 0, cmplx.Exp(complex(0, math.Pi/4))}
+		invT := Matrix2{1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4))}
+
+		// Create an _almost_ diagonal matrix with some
+		// off-diagonal terms on the order of 1e-17.
+		res := T
+		res.Mul(&h)
+		res.Mul(&T)
+		res.Mul(&h)
+		res.Mul(&T)
+		res.Mul(&invT)
+		res.Mul(&h)
+		res.Mul(&invT)
+		res.Mul(&h)
+
+		testMat(t, &res)
+
+		// Swap the rows and try again.
+		res.M11, res.M12, res.M21, res.M22 = res.M21, res.M22, res.M11, res.M12
+		testMat(t, &res)
+	})
 }
 
 func rawCondUnitary(s *Simulation, control, target int, m *Matrix2) {

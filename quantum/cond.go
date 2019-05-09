@@ -35,10 +35,15 @@ func CondUnitary(c Computer, control, target int, m *Matrix2) {
 
 	theta := 2 * math.Atan2(cmplx.Abs(m.M12), cmplx.Abs(m.M11))
 
-	// TODO: more numerically-stable formulae here.
-	b := imag(cmplx.Log(m.M11 / m.M12))
 	a := imag(cmplx.Log(m.M11 / -m.M21))
-	delta := imag(cmplx.Log(m.M11 / cmplx.Exp(complex(0, a/2+b/2))))
+	var b, delta float64
+	if cmplx.Abs(m.M11) > cmplx.Abs(m.M21) {
+		b = imag(cmplx.Log((m.M11 / m.M22) * cmplx.Exp(complex(0, -a))))
+		delta = imag(cmplx.Log(m.M11 / cmplx.Exp(complex(0, a/2+b/2))))
+	} else {
+		b = imag(cmplx.Log((-m.M21 / m.M12) * cmplx.Exp(complex(0, a))))
+		delta = imag(cmplx.Log(m.M12 / cmplx.Exp(complex(0, a/2-b/2))))
+	}
 
 	mat1 := rotateZ(a)
 	mat1A := rotateY(theta / 2)
