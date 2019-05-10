@@ -13,11 +13,11 @@ type CircuitHash [md5.Size]byte
 
 type CircuitHasher interface {
 	NumBits() int
-	Hash(g Gate) CircuitHash
+	Hash(g Applier) CircuitHash
 
 	// Prefix creates a hasher that applies the prefix g
 	// before every gate it hashes.
-	Prefix(g Gate) CircuitHasher
+	Prefix(g Applier) CircuitHasher
 }
 
 type circuitHasher struct {

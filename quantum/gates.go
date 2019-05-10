@@ -6,11 +6,25 @@ import (
 	"strings"
 )
 
+// An Applier is any operator that acts on a quantum
+// computer.
+type Applier interface {
+	Apply(c Computer)
+}
+
+// A FnApplier is an Applier that uses a pre-defined
+// function.
+type FnApplier func(c Computer)
+
+func (f FnApplier) Apply(c Computer) {
+	f(c)
+}
+
 // A Gate is a generic object that modifies a quantum
 // computer in some primitive way.
 type Gate interface {
 	fmt.Stringer
-	Apply(c Computer)
+	Applier
 	Inverse() Gate
 }
 
