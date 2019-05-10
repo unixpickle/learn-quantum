@@ -15,6 +15,14 @@ func Add(c Computer, source, target Reg, carry *int) {
 		panic("invalid arguments")
 	}
 
+	if len(source) == 1 {
+		if carry != nil {
+			CCNot(c, source[0], target[0], *carry)
+		}
+		c.CNot(source[0], target[0])
+		return
+	}
+
 	// Implementation of https://arxiv.org/abs/0910.2530
 
 	// Step 1
