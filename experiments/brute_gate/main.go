@@ -7,10 +7,16 @@ import (
 )
 
 func main() {
-	fmt.Println(Search(3, AllGates(3, false), quantum.NewClassicalGate(Toffoli, "")))
+	// fmt.Println(Search(3, AllGates(3, false), quantum.NewClassicalGate(Toffoli, "")))
 	// fmt.Println(SearchSqrt(1, AllGates(1, false), quantum.NewClassicalGate(Not, "")))
 	// fmt.Println(SearchCtrl(2, AllGates(2, false), &quantum.SqrtNotGate{Bit: 1}))
 	// fmt.Println(SearchCtrl(2, AllGates(2, false), &quantum.HGate{Bit: 1}))
+	idx := 3
+	fmt.Println(Search(4, AllGates(4, true), &constAdder{
+		Value:  5,
+		Target: quantum.Reg{0, 1, 2},
+		Carry:  &idx,
+	}))
 }
 
 func Not(b []bool) []bool {
