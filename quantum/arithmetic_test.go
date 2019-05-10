@@ -12,20 +12,22 @@ func TestAdd(t *testing.T) {
 			name = "Carry"
 		}
 		t.Run(name, func(t *testing.T) {
-			for i := 0; i < 100; i++ {
-				s1 := NewSimulation(11)
-				s2 := s1.Copy()
-				bits := rand.Perm(s1.NumBits())
-				source := Reg(bits[:5])
-				target := Reg(bits[5:10])
-				var carryField *int
-				if carry {
-					carryField = &bits[10]
-				}
-				Add(s1, source, target, carryField)
-				simulatedAdd(s2, source, target, carryField)
-				if !s1.ApproxEqual(s2, 1e-8) {
-					t.Error("bad results")
+			for numBits := 1; numBits < 7; numBits++ {
+				for i := 0; i < 10; i++ {
+					s1 := NewSimulation(numBits*2 + 1)
+					s2 := s1.Copy()
+					bits := rand.Perm(s1.NumBits())
+					source := Reg(bits[:numBits])
+					target := Reg(bits[numBits : numBits*2])
+					var carryField *int
+					if carry {
+						carryField = &bits[numBits*2]
+					}
+					Add(s1, source, target, carryField)
+					simulatedAdd(s2, source, target, carryField)
+					if !s1.ApproxEqual(s2, 1e-8) {
+						t.Error("bad results")
+					}
 				}
 			}
 		})
