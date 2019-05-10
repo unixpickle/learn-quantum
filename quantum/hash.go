@@ -36,7 +36,7 @@ func (c *circuitHasher) NumBits() int {
 	return c.startState.NumBits()
 }
 
-func (c *circuitHasher) Hash(g Gate) CircuitHash {
+func (c *circuitHasher) Hash(g Applier) CircuitHash {
 	s := c.startState.Copy()
 	g.Apply(s)
 	data := make([]byte, 0, len(s.Phases)*8)
@@ -50,7 +50,7 @@ func (c *circuitHasher) Hash(g Gate) CircuitHash {
 	return md5.Sum(data)
 }
 
-func (c *circuitHasher) Prefix(g Gate) CircuitHasher {
+func (c *circuitHasher) Prefix(g Applier) CircuitHasher {
 	s := c.startState.Copy()
 	g.Apply(s)
 	return &circuitHasher{startState: s}
@@ -94,7 +94,7 @@ func (s *symHasher) NumBits() int {
 	return s.startState.NumBits()
 }
 
-func (s *symHasher) Hash(g Gate) CircuitHash {
+func (s *symHasher) Hash(g Applier) CircuitHash {
 	sim := s.startState.Copy()
 	g.Apply(sim)
 
@@ -117,7 +117,7 @@ func (s *symHasher) Hash(g Gate) CircuitHash {
 	return md5.Sum(data)
 }
 
-func (s *symHasher) Prefix(g Gate) CircuitHasher {
+func (s *symHasher) Prefix(g Applier) CircuitHasher {
 	sim := s.startState.Copy()
 	g.Apply(sim)
 	return &symHasher{startState: sim}
