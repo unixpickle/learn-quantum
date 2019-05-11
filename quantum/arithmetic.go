@@ -62,3 +62,60 @@ func Add(c Computer, source, target Reg, carry *int) {
 		c.CNot(source[i], target[i])
 	}
 }
+
+// Sub performs the inverse of Add.
+func Sub(c Computer, source, target Reg, carry *int) {
+	var carryReg Reg
+	if carry != nil {
+		carryReg = Reg{*carry}
+	}
+	if source.Overlaps(target) || source.Overlaps(carryReg) || target.Overlaps(carryReg) ||
+		len(source) != len(target) || !source.Valid() || !target.Valid() {
+		panic("invalid arguments")
+	}
+
+	if len(source) == 1 {
+		c.CNot(source[0], target[0])
+		if carry != nil {
+			CCNot(c, source[0], target[0], *carry)
+		}
+		return
+	}
+
+	// Step 6
+	for i := len(source) - 1; i >= 0; i-- {
+		c.CNot(source[i], target[i])
+	}
+
+	// Step 5
+	for i := len(source) - 2; i > 0; i-- {
+		c.CNot(source[i], source[i+1])
+	}
+
+	// Step 4
+	for i := 1; i < len(source); i++ {
+		CCNot(c, source[i-1], target[i-1], source[i])
+		c.CNot(source[i], target[i])
+	}
+
+	// Step 3
+	if carry != nil {
+		CCNot(c, source[len(source)-1], target[len(target)-1], *carry)
+	}
+	for i := len(source) - 2; i >= 0; i-- {
+		CCNot(c, source[i], target[i], source[i+1])
+	}
+
+	// Step 2
+	for i := 1; i < len(source)-1; i++ {
+		c.CNot(source[i], source[i+1])
+	}
+	if carry != nil {
+		c.CNot(source[len(source)-1], *carry)
+	}
+
+	// Step 1
+	for i := len(source) - 1; i > 0; i-- {
+		c.CNot(source[i], target[i])
+	}
+}

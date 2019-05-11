@@ -34,6 +34,35 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestSub(t *testing.T) {
+	for _, carry := range []bool{false, true} {
+		name := "NoCarry"
+		if carry {
+			name = "Carry"
+		}
+		t.Run(name, func(t *testing.T) {
+			for numBits := 1; numBits < 7; numBits++ {
+				for i := 0; i < 10; i++ {
+					s1 := RandomSimulation(numBits*2 + 1)
+					s2 := s1.Copy()
+					bits := rand.Perm(s1.NumBits())
+					source := Reg(bits[:numBits])
+					target := Reg(bits[numBits : numBits*2])
+					var carryField *int
+					if carry {
+						carryField = &bits[numBits*2]
+					}
+					Add(s1, source, target, carryField)
+					Sub(s1, source, target, carryField)
+					if !s1.ApproxEqual(s2, 1e-8) {
+						t.Error("bad results", numBits)
+					}
+				}
+			}
+		})
+	}
+}
+
 func simulatedAdd(sim *Simulation, source, target Reg, carry *int) {
 	newPhases := make([]complex128, len(sim.Phases))
 	for i, ph := range sim.Phases {
