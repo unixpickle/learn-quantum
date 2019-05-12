@@ -5,6 +5,11 @@ import (
 	"math/cmplx"
 )
 
+var (
+	tGateValue    = cmplx.Exp(complex(0, math.Pi/4))
+	invTGateValue = cmplx.Exp(complex(0, -math.Pi/4))
+)
+
 // H performs a Hadamard gate.
 func H(c Computer, bitIdx int) {
 	s := complex(1/math.Sqrt2, 0)
@@ -13,12 +18,12 @@ func H(c Computer, bitIdx int) {
 
 // T performs a rotation by pi/4.
 func T(c Computer, bitIdx int) {
-	c.Unitary(bitIdx, &Matrix2{1, 0, 0, cmplx.Exp(complex(0, math.Pi/4))})
+	c.Unitary(bitIdx, &Matrix2{1, 0, 0, tGateValue})
 }
 
 // InvT performs an inverse rotation by pi/4.
 func InvT(c Computer, bitIdx int) {
-	c.Unitary(bitIdx, &Matrix2{1, 0, 0, cmplx.Exp(complex(0, -math.Pi/4))})
+	c.Unitary(bitIdx, &Matrix2{1, 0, 0, invTGateValue})
 }
 
 // SqrtT performs the positive square root of the T gate.

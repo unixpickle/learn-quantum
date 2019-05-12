@@ -19,6 +19,17 @@ func BenchmarkUnitary(b *testing.B) {
 	}
 }
 
+func BenchmarkT(b *testing.B) {
+	for _, size := range []int{1, 5, 10} {
+		b.Run(fmt.Sprintf("Bits%d", size), func(b *testing.B) {
+			s := RandomSimulation(size)
+			for i := 0; i < b.N; i++ {
+				T(s, i%size)
+			}
+		})
+	}
+}
+
 func BenchmarkCNot(b *testing.B) {
 	for _, size := range []int{2, 5, 10} {
 		b.Run(fmt.Sprintf("Bits%d", size), func(b *testing.B) {

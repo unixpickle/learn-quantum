@@ -100,6 +100,18 @@ func (s *Simulation) Unitary(target int, m *Matrix2) {
 	if target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
+
+	// Optimization for T-like gates.
+	if m.M11 == 1 && m.M12 == 0 && m.M21 == 0 {
+		for i := range s.Phases {
+			if i&(1<<uint(target)) == 0 {
+				continue
+			}
+			s.Phases[i] *= m.M22
+		}
+		return
+	}
+
 	for i := range s.Phases {
 		if i&(1<<uint(target)) != 0 {
 			continue
