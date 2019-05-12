@@ -5,6 +5,8 @@ package quantum
 // in target. If the carry argument is non-nil, it is used
 // as the qubit to be flipped if the addition wraps.
 // The source and target must be the same number of bits.
+// The source and target registers are stored lowest-bit
+// first.
 func Add(c Computer, source, target Reg, carry *int) {
 	var carryReg Reg
 	if carry != nil {
