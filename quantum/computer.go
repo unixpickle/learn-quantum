@@ -128,6 +128,9 @@ func (s *Simulation) CNot(control, target int) {
 	if control < 0 || control >= s.numBits || target < 0 || target >= s.numBits {
 		panic("bit index out of range")
 	}
+	if control == target {
+		panic("overlapping control and target is not invertible")
+	}
 	controlMask := 1 << uint(control)
 	targetMask := 1 << uint(target)
 	for i := range s.Phases {
