@@ -144,25 +144,23 @@ func ModAdd(c Computer, source, target, modulus Reg, working1, working2 int) {
 		panic("invalid inputs")
 	}
 
-	// Extend the target with one working bit.
+	// Extend the target with one working bit, then add
+	// the source to it.
 	Add(c, source, target, &working1)
 
-	// If we carried, we definitely need to subtract the
-	// modulus.
-	Cond(c, working1, func(c Computer) {
-		Sub(c, append(append(Reg{}, modulus...), working2),
-			append(append(Reg{}, target...), working1), nil)
-	})
+	// Subtract off an extended form of the modulus.
+	Sub(c, append(append(Reg{}, modulus...), working2),
+		append(append(Reg{}, target...), working1), nil)
 
-	// Modular wrap-around. This leaves working1 in an
-	// unclean state which we then must correct for.
-	Sub(c, modulus, target, &working1)
+	// If the highest bit is set, it means we wrapped
+	// around when subtracting the modulus.
 	Cond(c, working1, func(c Computer) {
 		Add(c, modulus, target, nil)
 	})
 
-	// If target < source, it means we wrapped around,
-	// so we don't want to flip working1.
+	// Reverse working1 if it was set, using the
+	// assumption that source and target started out both
+	// less than the modulus.
 	X(c, working1)
 	Lt(c, target, source, working1)
 }
