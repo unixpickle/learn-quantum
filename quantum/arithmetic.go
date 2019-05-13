@@ -121,3 +121,48 @@ func Sub(c Computer, source, target Reg, carry *int) {
 		c.CNot(source[i], target[i])
 	}
 }
+
+// Lt flips a bit if a < b in unsigned arithmetic.
+func Lt(c Computer, a, b Reg, target int) {
+	Sub(c, b, a, &target)
+	Add(c, b, a, nil)
+}
+
+// ModAdd performs modular addition.
+//
+// Behavior is undefined if the inputs are greater than or
+// equal to the modulus.
+//
+// The working qubits must start as zeros and will end as
+// zeros.
+func ModAdd(c Computer, source, target, modulus Reg, working1, working2 int) {
+	working := Reg{working1, working2}
+	if len(source) != len(target) || len(source) != len(modulus) || !source.Valid() ||
+		!target.Valid() || !modulus.Valid() || source.Overlaps(target) ||
+		target.Overlaps(modulus) || source.Overlaps(working) || target.Overlaps(working) ||
+		modulus.Overlaps(working) {
+		panic("invalid inputs")
+	}
+
+	// Extend the target with one working bit.
+	Add(c, source, target, &working1)
+
+	// If we carried, we definitely need to subtract the
+	// modulus.
+	Cond(c, working1, func(c Computer) {
+		Sub(c, append(append(Reg{}, modulus...), working2),
+			append(append(Reg{}, target...), working1), nil)
+	})
+
+	// Modular wrap-around. This leaves working1 in an
+	// unclean state which we then must correct for.
+	Sub(c, modulus, target, &working1)
+	Cond(c, working1, func(c Computer) {
+		Add(c, modulus, target, nil)
+	})
+
+	// If target < source, it means we wrapped around,
+	// so we don't want to flip working1.
+	X(c, working1)
+	Lt(c, target, source, working1)
+}
