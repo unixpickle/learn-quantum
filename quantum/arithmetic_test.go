@@ -84,22 +84,22 @@ func TestLt(t *testing.T) {
 func TestModAdd(t *testing.T) {
 	for numBits := 1; numBits < 5; numBits++ {
 		for i := 0; i < 10; i++ {
-			s1 := RandomSimulation(numBits*3 + 2)
+			s1 := RandomSimulation(numBits*3 + 1)
 			bits := rand.Perm(s1.NumBits())
 			source := Reg(bits[:numBits])
 			target := Reg(bits[numBits : numBits*2])
 			modulus := Reg(bits[numBits*2 : numBits*3])
-			working1, working2 := bits[numBits*3], bits[numBits*3+1]
-			working := Reg{working1, working2}
+			working := bits[numBits*3]
+			workingReg := Reg{working}
 			for i := range s1.Phases {
 				if source.Extract(uint(i)) >= modulus.Extract(uint(i)) ||
 					target.Extract(uint(i)) >= modulus.Extract(uint(i)) ||
-					modulus.Extract(uint(i)) == 0 || working.Extract(uint(i)) != 0 {
+					modulus.Extract(uint(i)) == 0 || workingReg.Extract(uint(i)) != 0 {
 					s1.Phases[i] = 0
 				}
 			}
 			s2 := s1.Copy()
-			ModAdd(s1, source, target, modulus, working1, working2)
+			ModAdd(s1, source, target, modulus, working)
 			simulatedModAdd(s2, source, target, modulus)
 			if !s1.ApproxEqual(s2, 1e-8) {
 				t.Error("bad results", numBits)

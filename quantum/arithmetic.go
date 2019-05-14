@@ -135,32 +135,29 @@ func Lt(c Computer, a, b Reg, target int) {
 //
 // The working qubits must start as zeros and will end as
 // zeros.
-func ModAdd(c Computer, source, target, modulus Reg, working1, working2 int) {
-	working := Reg{working1, working2}
+func ModAdd(c Computer, source, target, modulus Reg, working int) {
+	workingReg := Reg{working}
 	if len(source) != len(target) || len(source) != len(modulus) || !source.Valid() ||
 		!target.Valid() || !modulus.Valid() || source.Overlaps(target) ||
-		target.Overlaps(modulus) || source.Overlaps(working) || target.Overlaps(working) ||
-		modulus.Overlaps(working) {
+		target.Overlaps(modulus) || source.Overlaps(workingReg) || target.Overlaps(workingReg) ||
+		modulus.Overlaps(workingReg) {
 		panic("invalid inputs")
 	}
 
 	// Extend the target with one working bit, then add
 	// the source to it.
-	Add(c, source, target, &working1)
+	Add(c, source, target, &working)
+	Sub(c, modulus, target, &working)
 
-	// Subtract off an extended form of the modulus.
-	Sub(c, append(append(Reg{}, modulus...), working2),
-		append(append(Reg{}, target...), working1), nil)
-
-	// If the highest bit is set, it means we wrapped
-	// around when subtracting the modulus.
-	Cond(c, working1, func(c Computer) {
+	// If the carry bit is set, it means we wrapped around
+	// when subtracting the modulus.
+	Cond(c, working, func(c Computer) {
 		Add(c, modulus, target, nil)
 	})
 
 	// Reverse working1 if it was set, using the
 	// assumption that source and target started out both
 	// less than the modulus.
-	X(c, working1)
-	Lt(c, target, source, working1)
+	X(c, working)
+	Lt(c, target, source, working)
 }
