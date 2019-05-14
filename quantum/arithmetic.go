@@ -161,3 +161,22 @@ func ModAdd(c Computer, source, target, modulus Reg, working int) {
 	X(c, working)
 	Lt(c, target, source, working)
 }
+
+// ModSub is the inverse of ModAdd.
+func ModSub(c Computer, source, target, modulus Reg, working int) {
+	workingReg := Reg{working}
+	if len(source) != len(target) || len(source) != len(modulus) || !source.Valid() ||
+		!target.Valid() || !modulus.Valid() || source.Overlaps(target) ||
+		target.Overlaps(modulus) || source.Overlaps(workingReg) || target.Overlaps(workingReg) ||
+		modulus.Overlaps(workingReg) {
+		panic("invalid inputs")
+	}
+
+	Lt(c, target, source, working)
+	X(c, working)
+	Cond(c, working, func(c Computer) {
+		Sub(c, modulus, target, nil)
+	})
+	Add(c, modulus, target, &working)
+	Sub(c, source, target, &working)
+}

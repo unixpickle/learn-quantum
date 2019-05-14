@@ -108,6 +108,25 @@ func TestModAdd(t *testing.T) {
 	}
 }
 
+func TestModSub(t *testing.T) {
+	for numBits := 1; numBits < 5; numBits++ {
+		for i := 0; i < 10; i++ {
+			s1 := RandomSimulation(numBits*3 + 1)
+			s2 := s1.Copy()
+			bits := rand.Perm(s1.NumBits())
+			source := Reg(bits[:numBits])
+			target := Reg(bits[numBits : numBits*2])
+			modulus := Reg(bits[numBits*2 : numBits*3])
+			working := bits[numBits*3]
+			ModAdd(s1, source, target, modulus, working)
+			ModSub(s1, source, target, modulus, working)
+			if !s1.ApproxEqual(s2, 1e-8) {
+				t.Error("bad results", numBits)
+			}
+		}
+	}
+}
+
 func simulatedAdd(sim *Simulation, source, target Reg, carry *int) {
 	newPhases := make([]complex128, len(sim.Phases))
 	for i, ph := range sim.Phases {
